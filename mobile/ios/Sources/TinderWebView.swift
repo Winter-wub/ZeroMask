@@ -8,12 +8,15 @@ final class MaskModel: NSObject, ObservableObject {
     @Published var heartBurst = false
     @Published var slideAway = false
     @Published var popupWebView: WKWebView?
+    @Published var isInChat = false          // โหมดแชทเต็มจอ (Seamless Chat)
+    @Published var dropletBurst = false      // เอฟเฟกต์หยดน้ำกระจายของ Liquid Glass
     @Published var badgeCount = 0            // เลขแจ้งเตือนจริงจาก Tinder
     @Published var showRealInstagram = false // โหมด decoy: โชว์ instagram.com จริง
 
     let recsURL = URL(string: "https://tinder.com/app/recs")!
     private(set) var webView: WKWebView!
     private var titleObservation: NSKeyValueObservation?
+    private var urlObservation: NSKeyValueObservation?
     private var igTitleObservation: NSKeyValueObservation?
 
     // เลขแจ้งเตือนแยกฝั่ง แล้วรวมเป็น badgeCount เดียว
@@ -87,6 +90,18 @@ final class MaskModel: NSObject, ObservableObject {
                 self.recomputeBadge()
             }
         }
+
+        // ตรวจสอบ URL เพื่อปรับเข้าสู่โหมดแชทเต็มจออัตโนมัติ (Seamless Chat)
+        urlObservation = webView.observe(\.url, options: [.new]) { [weak self] wv, _ in
+            guard let self, let path = wv.url?.path else { return }
+            DispatchQueue.main.async {
+                if path.contains("/matches") || path.contains("/messages") {
+                    if !self.isInChat { self.isInChat = true }
+                } else if path.contains("/recs") {
+                    if self.isInChat { self.isInChat = false }
+                }
+            }
+        }
     }
 
     // ── โหมด decoy: สลับไป Instagram จริง ──
@@ -103,6 +118,12 @@ final class MaskModel: NSObject, ObservableObject {
         webView.evaluateJavaScript(MaskScripts.clickGamepad("Like"))
     }
 
+    func collect() {
+        dropletBurst = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) { self.dropletBurst = false }
+        webView.evaluateJavaScript(MaskScripts.clickGamepad("Like"))
+    }
+
     func pass() {
         withAnimation(.easeIn(duration: 0.3)) { slideAway = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
@@ -114,6 +135,16 @@ final class MaskModel: NSObject, ObservableObject {
     func superLike() {
         burst()
         webView.evaluateJavaScript(MaskScripts.clickGamepad("Super Like"))
+    }
+
+    func openChat() {
+        isInChat = true
+        go("matches")
+    }
+
+    func backToFeed() {
+        isInChat = false
+        go("recs")
     }
 
     func go(_ page: String) {

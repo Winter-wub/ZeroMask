@@ -21,10 +21,29 @@ enum ThemeMode: String, CaseIterable, Identifiable {
     }
 }
 
+enum DisguiseMode: String, CaseIterable, Identifiable {
+    case liquidGlass = "liquid"
+    case instagram = "instagram"
+    case rawTinder = "tinder"
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .liquidGlass: return "💎 Liquid Glass"
+        case .instagram:   return "📸 Instagram"
+        case .rawTinder:   return "🔥 Tinder"
+        }
+    }
+}
+
 // สถานะการตั้งค่าที่จำไว้ (UserDefaults) — ใช้ร่วมกันทั้งแอป
 final class AppSettings: ObservableObject {
     static let shared = AppSettings()
 
+    @AppStorage("disguiseMode") var disguiseMode: DisguiseMode = .liquidGlass {
+        willSet { objectWillChange.send() }
+    }
     @AppStorage("themeMode") var themeMode: ThemeMode = .system {
         willSet { objectWillChange.send() }
     }

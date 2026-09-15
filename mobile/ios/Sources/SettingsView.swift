@@ -19,6 +19,16 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // ── โหมดหน้ากากพรางตัว ──
+                Section("หน้ากากพรางตัว (Disguise Mode)") {
+                    Picker("รูปแบบ", selection: $settings.disguiseMode) {
+                        ForEach(DisguiseMode.allCases) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
                 // ── ธีม ──
                 Section("การแสดงผล") {
                     Picker("ธีม", selection: $settings.themeMode) {

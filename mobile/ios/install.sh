@@ -4,7 +4,7 @@
 set -e
 cd "$(dirname "$0")"
 
-DEVICE_ID="3EB536A0-05F0-5719-BD27-1DD1D30D55B5"   # iPhone 13 Pro Max ของ Prachayawut
+DEVICE_ID="00008110-000E78160201401E"   # iPhone's Wave
 DD="build/DD"
 
 echo "▶︎ building + signing…"

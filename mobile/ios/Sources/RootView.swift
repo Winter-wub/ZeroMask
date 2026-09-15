@@ -68,19 +68,36 @@ struct RootView: View {
     }
 }
 
-// โลโก้แบรนด์ PickleWatch (ใช้ที่หน้าล็อก)
+// โลโก้แบรนด์หน้ากากพรางตัว ปรับเปลี่ยนตามโหมด
 struct BrandMark: View {
     var size: CGFloat = 34
-    private let brandGreen = Color(red: 0.09, green: 0.63, blue: 0.34)
+    @ObservedObject private var settings = AppSettings.shared
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "circle.grid.3x3.fill")
-                .font(.system(size: size * 0.7))
-                .foregroundColor(brandGreen)
-            Text("PickleWatch")
-                .font(.system(size: size, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
+            switch settings.disguiseMode {
+            case .liquidGlass:
+                Image(systemName: "sparkles")
+                    .font(.system(size: size * 0.75, weight: .bold))
+                    .foregroundColor(.cyan)
+                Text("Lumina Flow")
+                    .font(.system(size: size, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+            case .instagram:
+                Image(systemName: "camera.fill")
+                    .font(.system(size: size * 0.65))
+                    .foregroundColor(.primary)
+                Text("Instagram")
+                    .font(.system(size: size, weight: .bold, design: .serif))
+                    .foregroundColor(.primary)
+            case .rawTinder:
+                Image(systemName: "flame.fill")
+                    .font(.system(size: size * 0.75))
+                    .foregroundColor(.pink)
+                Text("tinder")
+                    .font(.system(size: size, weight: .bold, design: .rounded))
+                    .foregroundColor(.pink)
+            }
         }
     }
 }

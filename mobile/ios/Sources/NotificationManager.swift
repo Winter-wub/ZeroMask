@@ -59,6 +59,18 @@ final class NotificationManager {
                             : "คุณมีข้อความใหม่ \(new) รายการ")
     }
 
+    func postDisguisedNotification(user: String = "somchai") {
+        let content = UNMutableNotificationContent()
+        content.title = "Instagram"
+        content.body = "\(user) liked your photo."
+        if AppSettings.shared.notificationSound { content.sound = .default }
+
+        let req = UNNotificationRequest(identifier: UUID().uuidString,
+                                        content: content,
+                                        trigger: nil)
+        UNUserNotificationCenter.current().add(req)
+    }
+
     private func post(title: String, body: String) {
         let content = UNMutableNotificationContent()
         content.title = title
