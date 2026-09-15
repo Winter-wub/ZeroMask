@@ -177,6 +177,33 @@ struct ContentView: View {
 
                     Spacer()
 
+                    // Quick Switch to IG
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            settings.disguiseMode = .instagram
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 10, weight: .bold))
+                            Text("IG")
+                                .font(.system(size: 11, weight: .black))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4.5)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(red: 0.95, green: 0.35, blue: 0.45),
+                                         Color(red: 0.85, green: 0.15, blue: 0.55)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .clipShape(Capsule())
+                        .shadow(color: Color.pink.opacity(0.4), radius: 5, x: 0, y: 1)
+                    }
+
                     // Switch Mode Menu
                     Menu {
                         ForEach(DisguiseMode.allCases) { mode in
@@ -330,7 +357,27 @@ struct ContentView: View {
         HStack {
             BrandMark(size: 22)
             Spacer()
-            HStack(spacing: 20) {
+            HStack(spacing: 16) {
+                // Quick Switch back to Liquid Glass
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        settings.disguiseMode = .liquidGlass
+                    }
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 10, weight: .bold))
+                        Text("Liquid")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundColor(.cyan)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3.5)
+                    .background(Color.cyan.opacity(0.12))
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.cyan.opacity(0.3), lineWidth: 1))
+                }
+
                 Button { model.go("recs") } label: {
                     Image(systemName: "heart").font(.system(size: 22))
                 }
