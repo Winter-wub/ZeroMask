@@ -148,14 +148,14 @@ struct ContentView: View {
                     HStack(spacing: 8) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(LinearGradient(colors: [.cyan, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .fill(LinearGradient(colors: [.cyan, .indigo, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
                                 .frame(width: 26, height: 26)
-                            Text("LF")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(.white)
                         }
-                        Text("Lumina Flow")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                        Text("Prism")
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                     }
 

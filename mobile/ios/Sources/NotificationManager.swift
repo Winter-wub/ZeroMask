@@ -54,7 +54,7 @@ final class NotificationManager {
         if appIsActive && !settings.notifyWhileUsing { return }
 
         let new = count - lastCount
-        post(title: "PickleWatch",
+        post(title: "Prism",
              body: new == 1 ? "คุณมีข้อความใหม่ 1 รายการ"
                             : "คุณมีข้อความใหม่ \(new) รายการ")
     }
