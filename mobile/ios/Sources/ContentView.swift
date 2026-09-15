@@ -1,22 +1,12 @@
 import SwiftUI
 import WebKit
 
-// หน้าจอหลัก: รองรับ 3 โหมดพรางตัว (Liquid Glass, Instagram, Tinder)
-// พร้อมระบบแชท IG Direct แบบเต็มจอ ไร้แถบกวนใจ (Seamless Chat)
+// หน้าจอหลัก: โหมดหลัก Liquid Glass (Lumina Flow) และ Raw Tinder
+// พร้อมระบบแชทเต็มจอ (Seamless Chat) และโหมดสลับไป Instagram จริง (Decoy)
 struct ContentView: View {
     @StateObject private var model = MaskModel()
     @ObservedObject private var settings = AppSettings.shared
     @State private var showSettings = false
-
-    // สีสไตล์ Instagram
-    private let igBorder = Color(.separator)
-    private let igText = Color(.label)
-    private let igBg = Color(.systemBackground)
-    private let igGradient = LinearGradient(
-        colors: [Color(red: 0.94, green: 0.58, blue: 0.20),
-                 Color(red: 0.86, green: 0.15, blue: 0.26),
-                 Color(red: 0.74, green: 0.09, blue: 0.53)],
-        startPoint: .bottomLeading, endPoint: .topTrailing)
 
     var body: some View {
         ZStack {
@@ -28,9 +18,6 @@ struct ContentView: View {
                 switch settings.disguiseMode {
                 case .liquidGlass:
                     liquidGlassView
-                        .transition(.opacity)
-                case .instagram:
-                    instagramView
                         .transition(.opacity)
                 case .rawTinder:
                     rawTinderView
@@ -64,10 +51,7 @@ struct ContentView: View {
     }
 
     private var currentBackground: Color {
-        if settings.disguiseMode == .liquidGlass || settings.disguiseMode == .rawTinder {
-            return Color(red: 0.04, green: 0.06, blue: 0.09)
-        }
-        return igBg
+        Color(red: 0.04, green: 0.06, blue: 0.09)
     }
 
     // =========================================================================
@@ -86,24 +70,24 @@ struct ContentView: View {
                         Text("ย้อนกลับ")
                             .font(.system(size: 14, weight: .semibold))
                     }
-                    .foregroundColor(settings.disguiseMode == .liquidGlass ? .cyan : igText)
+                    .foregroundColor(.cyan)
                 }
 
                 Spacer()
 
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(settings.disguiseMode == .liquidGlass ? Color.cyan.opacity(0.25) : Color.blue.opacity(0.15))
+                        .fill(Color.cyan.opacity(0.25))
                         .frame(width: 32, height: 32)
                         .overlay(
                             Image(systemName: "bubble.left.and.bubble.right.fill")
                                 .font(.system(size: 14))
-                                .foregroundColor(settings.disguiseMode == .liquidGlass ? .cyan : .blue)
+                                .foregroundColor(.cyan)
                         )
                     VStack(alignment: .leading, spacing: 1) {
                         Text(model.username.components(separatedBy: " · ").first ?? "ข้อความ Direct")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(settings.disguiseMode == .liquidGlass ? .white : igText)
+                            .foregroundColor(.white)
                         HStack(spacing: 4) {
                             Circle().fill(Color.green).frame(width: 6, height: 6)
                             Text("Active Now")
@@ -119,20 +103,20 @@ struct ContentView: View {
                     showSettings = true
                 } label: {
                     Image(systemName: "ellipsis")
-                        .foregroundColor(settings.disguiseMode == .liquidGlass ? .white : igText)
+                        .foregroundColor(.white)
                         .padding(6)
                 }
             }
             .padding(.horizontal, 14)
             .frame(height: 48)
-            .background(settings.disguiseMode == .liquidGlass ? Color(red: 0.08, green: 0.10, blue: 0.14) : igBg)
+            .background(Color(red: 0.08, green: 0.10, blue: 0.14))
             
-            Divider().overlay(settings.disguiseMode == .liquidGlass ? Color.white.opacity(0.15) : igBorder)
+            Divider().overlay(Color.white.opacity(0.15))
 
             // Full Height Chat Webview
             WebViewRepresentable(webView: model.webView)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(settings.disguiseMode == .liquidGlass ? Color.black : igBg)
+                .background(Color.black)
         }
     }
 
@@ -177,10 +161,10 @@ struct ContentView: View {
 
                     Spacer()
 
-                    // Quick Switch to IG
+                    // Quick Switch to REAL Instagram
                     Button {
                         withAnimation(.easeInOut(duration: 0.2)) {
-                            settings.disguiseMode = .instagram
+                            model.toggleRealInstagram()
                         }
                     } label: {
                         HStack(spacing: 4) {
@@ -334,134 +318,7 @@ struct ContentView: View {
     }
 
     // =========================================================================
-    // 3. INSTAGRAM VIEW (โหมดพรางฟีดไอจีเดิม)
-    // =========================================================================
-    private var instagramView: some View {
-        VStack(spacing: 0) {
-            header
-            Divider().overlay(igBorder)
-            postHead
-            Divider().overlay(igBorder)
-            media
-            Divider().overlay(igBorder)
-            if settings.showActionRow {
-                actionRow
-                Divider().overlay(igBorder)
-            }
-            bottomNav
-        }
-    }
-
-    // ── แถบบน IG ──
-    private var header: some View {
-        HStack {
-            BrandMark(size: 22)
-            Spacer()
-            HStack(spacing: 16) {
-                // Quick Switch back to Liquid Glass
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        settings.disguiseMode = .liquidGlass
-                    }
-                } label: {
-                    HStack(spacing: 3) {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 10, weight: .bold))
-                        Text("Liquid")
-                            .font(.system(size: 11, weight: .bold))
-                    }
-                    .foregroundColor(.cyan)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3.5)
-                    .background(Color.cyan.opacity(0.12))
-                    .clipShape(Capsule())
-                    .overlay(Capsule().stroke(Color.cyan.opacity(0.3), lineWidth: 1))
-                }
-
-                Button { model.go("recs") } label: {
-                    Image(systemName: "heart").font(.system(size: 22))
-                }
-                Button { model.openChat() } label: {
-                    Image(systemName: "bubble.right").font(.system(size: 21))
-                        .igBadge(model.badgeCount)
-                }
-            }
-            .foregroundColor(igText)
-        }
-        .padding(.horizontal, 14)
-        .frame(height: 44)
-    }
-
-    // ── หัวโพสต์ IG ──
-    private var postHead: some View {
-        HStack(spacing: 10) {
-            Circle().fill(igGradient).frame(width: 30, height: 30)
-            Text(model.username)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(igText)
-            Spacer()
-            Button { showSettings = true } label: {
-                Image(systemName: "ellipsis").foregroundColor(igText)
-            }
-        }
-        .padding(.horizontal, 12)
-        .frame(height: 42)
-    }
-
-    // ── แถวปุ่มใต้โพสต์ IG ──
-    private var actionRow: some View {
-        HStack(spacing: 18) {
-            Button { model.like() } label: {
-                Image(systemName: "heart").font(.system(size: 24))
-            }
-            Button { model.openChat() } label: {
-                Image(systemName: "bubble.right").font(.system(size: 23))
-            }
-            Button { model.superLike() } label: {
-                Image(systemName: "paperplane").font(.system(size: 23))
-            }
-            Spacer()
-            Button { model.pass() } label: {
-                Image(systemName: "bookmark").font(.system(size: 23))
-            }
-        }
-        .foregroundColor(igText)
-        .padding(.horizontal, 14)
-        .frame(height: 44)
-    }
-
-    // ── แถบล่าง IG ──
-    private var bottomNav: some View {
-        HStack {
-            Spacer()
-            Button { model.go("recs") } label: {
-                Image(systemName: "house").font(.system(size: 24))
-            }
-            Spacer()
-            Button { model.go("explore") } label: {
-                Image(systemName: "magnifyingglass").font(.system(size: 24))
-            }
-            Spacer()
-            Button { model.toggleRealInstagram() } label: {
-                Image(systemName: "play.rectangle").font(.system(size: 24))
-            }
-            Spacer()
-            Button { model.openChat() } label: {
-                Image(systemName: "bubble.left").font(.system(size: 24))
-            }
-            Spacer()
-            Button { model.go("profile") } label: {
-                Circle().fill(igGradient).frame(width: 26, height: 26)
-                    .overlay(Circle().stroke(igText, lineWidth: 1.5))
-            }
-            Spacer()
-        }
-        .foregroundColor(igText)
-        .frame(height: 48)
-    }
-
-    // =========================================================================
-    // 4. RAW TINDER VIEW (โหมดตรวจสอบ Tinder ดั้งเดิม)
+    // 3. RAW TINDER VIEW (โหมดตรวจสอบ Tinder ดั้งเดิม)
     // =========================================================================
     private var rawTinderView: some View {
         VStack(spacing: 0) {
@@ -476,6 +333,33 @@ struct ContentView: View {
                         .foregroundColor(.pink)
                 }
                 Spacer()
+
+                // Quick Switch to REAL Instagram
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        model.toggleRealInstagram()
+                    }
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 9, weight: .bold))
+                        Text("IG")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.95, green: 0.35, blue: 0.45),
+                                     Color(red: 0.85, green: 0.15, blue: 0.55)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .clipShape(Capsule())
+                }
+
                 Text("RAW VIEW")
                     .font(.system(size: 10, weight: .bold))
                     .padding(.horizontal, 8)
@@ -562,9 +446,11 @@ struct ContentView: View {
         GeometryReader { geo in
             ZStack {
                 WebViewRepresentable(webView: model.igWebView)
-                    .background(igBg)
+                    .background(Color.black)
                 DraggableFloatingButton(bounds: geo.size) {
-                    model.toggleRealInstagram()
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        model.toggleRealInstagram()
+                    }
                 }
             }
         }

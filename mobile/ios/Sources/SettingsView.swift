@@ -20,13 +20,17 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 // ── โหมดหน้ากากพรางตัว ──
-                Section("หน้ากากพรางตัว (Disguise Mode)") {
+                Section {
                     Picker("รูปแบบ", selection: $settings.disguiseMode) {
                         ForEach(DisguiseMode.allCases) { mode in
                             Text(mode.label).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
+                } header: {
+                    Text("หน้ากากพรางตัว (Disguise Mode)")
+                } footer: {
+                    Text("โหมดหลักคือ Liquid Glass (Lumina Flow) ที่ดูไม่เหมือนใคร หรือเลือกดู Raw Tinder\nแตะปุ่ม 📸 IG ในหน้าหลักเพื่อสลับไป Instagram จริง (Decoy) ได้ตลอดเวลา")
                 }
 
                 // ── ธีม ──
@@ -43,7 +47,6 @@ struct SettingsView: View {
                 Section("การเล่นแบบฟีด") {
                     Toggle("ดับเบิลแท็ปรูปเพื่อ Like", isOn: $settings.doubleTapLike)
                     Toggle("ปัดลงเพื่อข้ามคนนี้", isOn: $settings.swipeToPass)
-                    Toggle("แสดงแถวปุ่มใต้โพสต์", isOn: $settings.showActionRow)
                 }
 
                 // ── การแจ้งเตือน ──

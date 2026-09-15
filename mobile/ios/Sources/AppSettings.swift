@@ -23,7 +23,6 @@ enum ThemeMode: String, CaseIterable, Identifiable {
 
 enum DisguiseMode: String, CaseIterable, Identifiable {
     case liquidGlass = "liquid"
-    case instagram = "instagram"
     case rawTinder = "tinder"
 
     var id: String { rawValue }
@@ -31,7 +30,6 @@ enum DisguiseMode: String, CaseIterable, Identifiable {
     var label: String {
         switch self {
         case .liquidGlass: return "💎 Liquid Glass"
-        case .instagram:   return "📸 Instagram"
         case .rawTinder:   return "🔥 Tinder"
         }
     }

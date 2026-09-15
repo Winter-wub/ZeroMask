@@ -83,13 +83,6 @@ struct BrandMark: View {
                 Text("Lumina Flow")
                     .font(.system(size: size, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
-            case .instagram:
-                Image(systemName: "camera.fill")
-                    .font(.system(size: size * 0.65))
-                    .foregroundColor(.primary)
-                Text("Instagram")
-                    .font(.system(size: size, weight: .bold, design: .serif))
-                    .foregroundColor(.primary)
             case .rawTinder:
                 Image(systemName: "flame.fill")
                     .font(.system(size: size * 0.75))
