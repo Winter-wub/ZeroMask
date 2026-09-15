@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-15T21:06:00.000Z",
+  "title": "Design System: mask-of-sex",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Heart Crimson",
+        "canonical": "#ed4956",
+        "tonalRamp": ["#420d11", "#6e151b", "#9f1e27", "#cb2733", "#ed4956", "#f2757f", "#f7a3aa", "#fcd1d5"]
+      },
+      "primary-gradient-start": {
+        "role": "primary",
+        "displayName": "Sunset Orange",
+        "canonical": "#f09433",
+        "tonalRamp": ["#422105", "#703a0a", "#a3540e", "#d46e12", "#f09433", "#f4ae62", "#f8c996", "#fce4cb"]
+      },
+      "primary-gradient-mid": {
+        "role": "primary",
+        "displayName": "Sunset Red",
+        "canonical": "#dc2743",
+        "tonalRamp": ["#3d060e", "#680a18", "#970f23", "#c41630", "#dc2743", "#e65a70", "#f08ea0", "#f9c7d0"]
+      },
+      "primary-gradient-end": {
+        "role": "primary",
+        "displayName": "Sunset Magenta",
+        "canonical": "#bc1888",
+        "tonalRamp": ["#360425", "#5c073f", "#840a5a", "#ab0e75", "#bc1888", "#d14ea8", "#e486c7", "#f3c2e4"]
+      },
+      "decoy-brand": {
+        "role": "secondary",
+        "displayName": "Pickle Court",
+        "canonical": "#17a157",
+        "tonalRamp": ["#042613", "#084724", "#0d6e38", "#12944b", "#17a157", "#3ec077", "#76d59f", "#b4eacb"]
+      },
+      "decoy-brand-light": {
+        "role": "secondary",
+        "displayName": "Pickle Court Light",
+        "canonical": "#2ec770",
+        "tonalRamp": ["#072e18", "#0f542c", "#177e43", "#20aa5b", "#2ec770", "#5bda91", "#8fe6b4", "#c5f3da"]
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "Feed Canvas",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#1a1a1a", "#333333", "#595959", "#808080", "#b3b3b3", "#d9d9d9", "#f2f2f2", "#ffffff"]
+      },
+      "neutral-text": {
+        "role": "neutral",
+        "displayName": "Feed Ink",
+        "canonical": "#262626",
+        "tonalRamp": ["#000000", "#121212", "#262626", "#404040", "#666666", "#8c8c8c", "#bfbfbf", "#e6e6e6"]
+      },
+      "neutral-border": {
+        "role": "neutral",
+        "displayName": "Hairline Neutral",
+        "canonical": "#dbdbdb",
+        "tonalRamp": ["#333333", "#595959", "#808080", "#a6a6a6", "#bfbfbf", "#dbdbdb", "#eaeaea", "#f7f7f7"]
+      },
+      "neutral-secondary": {
+        "role": "neutral",
+        "displayName": "Secondary Subtle",
+        "canonical": "#8e8e8e",
+        "tonalRamp": ["#1f1f1f", "#3b3b3b", "#5c5c5c", "#787878", "#8e8e8e", "#aaaaaa", "#c7c7c7", "#e5e5e5"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display Script", "purpose": "Instagram cursive wordmark." },
+      "headline": { "displayName": "Headline", "purpose": "Dashboard headings and PIN setup titles." },
+      "title": { "displayName": "Title", "purpose": "Modal navigation bar titles." },
+      "body": { "displayName": "Body", "purpose": "Usernames and feed text." },
+      "label": { "displayName": "Label", "purpose": "Badge counts and timestamp metadata." }
+    },
+    "shadows": [
+      { "name": "heart-burst-depth", "value": "0 2px 12px rgba(0,0,0,0.45)", "purpose": "Contrast halo under double-tap heart." },
+      { "name": "floating-control-resting", "value": "0 2px 6px rgba(0,0,0,0.15)", "purpose": "Resting depth for AssistiveTouch return button." },
+      { "name": "floating-control-active", "value": "0 4px 10px rgba(0,0,0,0.30)", "purpose": "Active drag depth for AssistiveTouch return button." }
+    ],
+    "motion": [
+      { "name": "heart-pop-spring", "value": "spring(response: 0.3, dampingFraction: 0.6)", "purpose": "Instagram double-tap heart burst animation." },
+      { "name": "magnetic-snap-spring", "value": "spring(response: 0.35, dampingFraction: 0.7)", "purpose": "Edge magnetic snapping for floating button." },
+      { "name": "panic-cut-fade", "value": "ease-in-out 0.15s", "purpose": "Immediate swap into genuine decoy webview." }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "390px" },
+      { "name": "regular", "value": "430px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Feed Post Header",
+      "kind": "custom",
+      "refersTo": "post-header",
+      "description": "Instagram post header displaying user avatar and name.",
+      "html": "<div class=\"ds-post-header\"><span class=\"ds-avatar-ring\"><span class=\"ds-avatar-inner\"></span></span><span class=\"ds-username\">Jessica, 25</span><span class=\"ds-ellipsis\">•••</span></div>",
+      "css": ".ds-post-header { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; background: #fff; border-bottom: 1px solid #dbdbdb; font-family: -apple-system, BlinkMacSystemFont, sans-serif; } .ds-avatar-ring { width: 30px; height: 30px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); display: flex; align-items: center; justify-content: center; } .ds-avatar-inner { width: 100%; height: 100%; border-radius: 50%; background: #eee; border: 1.5px solid #fff; } .ds-username { font-size: 14px; font-weight: 600; color: #262626; flex: 1; } .ds-ellipsis { color: #262626; letter-spacing: 1px; font-size: 12px; cursor: pointer; }"
+    },
+    {
+      "name": "Feed Action Row",
+      "kind": "custom",
+      "refersTo": "action-row",
+      "description": "Four standard Instagram feed action buttons mapping to dating actions.",
+      "html": "<div class=\"ds-action-row\"><button class=\"ds-icon-btn ds-like\">♥</button><button class=\"ds-icon-btn\">💬</button><button class=\"ds-icon-btn\">✈</button><div class=\"ds-spacer\"></div><button class=\"ds-icon-btn\">🔖</button></div>",
+      "css": ".ds-action-row { display: flex; align-items: center; gap: 18px; height: 44px; padding: 0 14px; background: #fff; border-top: 1px solid #dbdbdb; border-bottom: 1px solid #dbdbdb; } .ds-icon-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: #262626; display: flex; align-items: center; justify-content: center; } .ds-like:active { color: #ed4956; transform: scale(1.2); transition: transform 0.15s; } .ds-spacer { flex: 1; }"
+    },
+    {
+      "name": "Notification Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Vibrant Instagram crimson capsule overlay for unread message counts.",
+      "html": "<span class=\"ds-badge\">3</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 16px; padding: 0 4px; background: #ed4956; color: #fff; font-size: 10px; font-weight: 700; border-radius: 9999px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }"
+    },
+    {
+      "name": "Floating Return Button",
+      "kind": "button",
+      "refersTo": "floating-btn",
+      "description": "Magnetic AssistiveTouch-style return button used during decoy viewing.",
+      "html": "<button class=\"ds-floating-btn\">↩</button>",
+      "css": ".ds-floating-btn { width: 56px; height: 56px; border-radius: 50%; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(20px); border: 0.5px solid rgba(0, 0, 0, 0.12); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); color: #000; font-size: 20px; font-weight: 600; cursor: grab; display: flex; align-items: center; justify-content: center; } .ds-floating-btn:active { transform: scale(1.1); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.30); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Cloaked Social Feed",
+    "overview": "The visual language of mask-of-sex is built on complete, pixel-accurate fidelity to the native Instagram iOS application. Its entire purpose is to provide an airtight visual camouflage for personal dating exploration. To an outside observer or casual glance over a shoulder, the interface presents the unmistakable visual rhythm, iconography, and spatial composition of scrolling through an ordinary Instagram post.\n\nThe aesthetic philosophy centers on absolute understatement and authentic muscle memory: every layout dimension, icon glyph, and interaction state mimics the real mobile client. Supporting this is a secondary athletic decoy identity (\"PickleWatch\"), which surfaces an innocent, highly believable pickleball statistics dashboard in the iOS App Switcher and provides a fully isolated, panic-proof decoy surface upon entering an alternate PIN.",
+    "keyCharacteristics": [
+      "Pixel-Accurate Social Mimicry: Faithful reproduction of Instagram top chrome, story avatar rings, post headers, action rows, and bottom tabs.",
+      "Native Touch Ergonomics: High-fidelity gesture mappings—double-tap to like with bursting heart animation, hard scroll to pass, and magnetic AssistiveTouch-style floating return controls.",
+      "Dual-Identity Segregation: Clean separation between the primary Instagram skin and the PickleWatch sports disguise.",
+      "Semantic System Theme Harmony: Full native support for Light and Dark modes leveraging iOS system materials and semantic colors."
+    ],
+    "rules": [
+      {
+        "name": "The Zero-Tinder-Color Rule",
+        "body": "Tinder brand coral (#FE3C72), Tinder flame gradients, and bright dating accents are strictly prohibited from appearing anywhere in the UI. If a color accent is visible, it must strictly be Instagram crimson or PickleWatch sports green.",
+        "section": "colors"
+      },
+      {
+        "name": "The System-Semantic Rule",
+        "body": "Native views must bind to semantic iOS colors (systemBackground, label, separator, secondaryLabel) rather than hard-coded hexes so Dark Mode transition is seamless and prevents blinding contrast flashes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Authentic Glyphs Rule",
+        "body": "Every icon in the application must use Apple's SF Symbols (heart, bubble.right, paperplane, bookmark, house, magnifyingglass, ellipsis) sized between 21pt and 24pt with standard weight. No third-party or custom web icon sets may be introduced.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-At-Rest Rule",
+        "body": "All primary surfaces are strictly flat at rest. Structural separation is achieved entirely through hairline dividers (0.5pt or 1pt solid separator). Shadows never appear under cards, headers, or navbars.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Native Material Rule",
+        "body": "Floating controls and overlay surfaces must use iOS system materials (.regularMaterial, UIBlurEffect) rather than simulated CSS backdrop filters, ensuring natural native depth blur.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do map every user touch interaction 1:1 to underlying Tinder web actions without background automation or synthetic delays.",
+      "Do enforce complete session isolation for the secondary decoy PIN (PickleLiveView) using non-persistent website data stores.",
+      "Do ensure all interactive touch targets meet or exceed Apple's 44×44 pt minimum bounds.",
+      "Do test both Light Mode and Dark Mode against iOS system semantic colors.",
+      "Do show the innocent PickleDashboard instantly when transitioning to the iOS App Switcher."
+    ],
+    "donts": [
+      "Don't ever display Tinder logos, flame glyphs, or Tinder coral (#FE3C72).",
+      "Don't allow web scrollbars, text selection highlights, or cursor pointers to leak through the WKWebView.",
+      "Don't add desktop-style card shadows or heavy border radii to the feed layout.",
+      "Don't create bespoke web-style modal dialogs when native iOS sheets (.sheet) provide HIG-compliant gestures."
+    ]
+  }
+}

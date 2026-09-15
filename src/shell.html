@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self'; frame-src https:; child-src https:;" />
+  <title>Instagram</title>
+  <style>
+    :root {
+      --ig-border: #dbdbdb;
+      --ig-text: #262626;
+      --ig-bg: #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      display: flex;
+      flex-direction: column;
+      background: var(--ig-bg);
+      font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+      color: var(--ig-text);
+      overflow: hidden;
+    }
+
+    /* ===== Header สไตล์ Instagram ===== */
+    #header {
+      height: 48px;
+      flex: 0 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px 0 78px; /* เว้นที่ให้ปุ่มไฟจราจร mac ฝั่งซ้าย */
+      border-bottom: 1px solid var(--ig-border);
+      background: var(--ig-bg);
+      -webkit-app-region: drag; /* ลากย้ายหน้าต่างได้จาก header */
+      user-select: none;
+    }
+    #brand {
+      font-family: "Snell Roundhand", "Brush Script MT", "Segoe Script", cursive;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      line-height: 1;
+      padding-top: 2px;
+    }
+    #header .actions {
+      display: flex;
+      gap: 18px;
+      -webkit-app-region: no-drag;
+    }
+    #header .actions button {
+      background: none; border: none; cursor: pointer;
+      color: var(--ig-text); display: flex; padding: 0;
+    }
+    #header .actions svg { width: 24px; height: 24px; }
+
+    /* ===== ส่วนฝัง Tinder (จัดหน้าตาเป็น "โพสต์" แบบ IG) ===== */
+    #content { flex: 1 1 auto; position: relative; display: flex; flex-direction: column; min-height: 0; }
+
+    /* หัวโพสต์: avatar + ชื่อ (ดึงชื่อจากการ์ด Tinder มาโชว์) */
+    #post-head {
+      height: 42px; flex: 0 0 42px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--ig-border);
+      user-select: none;
+    }
+    #post-head .avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 1.5px solid transparent;
+      background: linear-gradient(45deg,#f09433,#dc2743,#bc1888);
+    }
+    #post-user { font-weight: 600; font-size: 14px; }
+
+    /* ตัวรูป (webview Tinder) + หัวใจเด้งตอนดับเบิลแท็ป */
+    #media { flex: 1 1 auto; position: relative; background: #000; min-height: 0; overflow: hidden; }
+    #media webview { width: 100%; height: 100%; border: 0; display: flex; }
+    #media.slide-away webview { transition: transform .35s ease-in, opacity .35s ease-in; transform: translateY(-40px); opacity: 0; }
+
+    #heart-burst {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none; opacity: 0;
+    }
+    #heart-burst svg { width: 96px; height: 96px; fill: #fff; filter: drop-shadow(0 2px 12px rgba(0,0,0,.45)); }
+    #heart-burst.pop { animation: heartpop .8s ease forwards; }
+    @keyframes heartpop {
+      0%   { opacity: 0; transform: scale(.4); }
+      15%  { opacity: 1; transform: scale(1.15); }
+      30%  { transform: scale(1); }
+      70%  { opacity: 1; }
+      100% { opacity: 0; transform: scale(1); }
+    }
+
+    /* แถวปุ่มใต้โพสต์แบบ IG: ❤️ Like / 💬 แชท / ✈️ Super Like / 🔖 ข้าม */
+    #post-actions {
+      height: 44px; flex: 0 0 44px;
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 12px;
+      border-top: 1px solid var(--ig-border);
+    }
+    #post-actions button {
+      background: none; border: none; cursor: pointer; padding: 0;
+      color: var(--ig-text); display: flex;
+    }
+    #post-actions svg { width: 26px; height: 26px; }
+    #post-actions .spacer { flex: 1; }
+    #act-like.liked { color: #ed4956; }
+    #act-like.liked svg { fill: #ed4956; }
+
+    /* ===== Bottom nav แบบ IG (ตกแต่ง) ===== */
+    #nav {
+      height: 50px;
+      flex: 0 0 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-top: 1px solid var(--ig-border);
+      background: var(--ig-bg);
+    }
+    #nav button {
+      background: none; border: none; cursor: pointer; padding: 6px;
+      color: var(--ig-text); display: flex;
+    }
+    #nav svg { width: 26px; height: 26px; }
+    #nav .avatar {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 1.5px solid var(--ig-text);
+      background: linear-gradient(45deg,#f09433,#dc2743,#bc1888);
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header id="header">
+    <div id="brand">Instagram</div>
+    <div class="actions">
+      <button title="Notifications" id="btn-reload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M12 21s-7-4.35-9.5-8.5C1 9.5 2.5 6 6 6c2 0 3.2 1.2 4 2.3C10.8 7.2 12 6 14 6c3.5 0 5 3.5 3.5 6.5C19 16.65 12 21 12 21z"/>
+        </svg>
+      </button>
+      <button title="Messages">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M21 11.5a8.38 8.38 0 0 1-9 8.5 9 9 0 0 1-4-1L3 20l1-4a8.5 8.5 0 1 1 17-4.5z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="content">
+    <div id="post-head">
+      <span class="avatar"></span>
+      <span id="post-user">…</span>
+    </div>
+    <div id="media">
+      <div id="heart-burst">
+        <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.35-9.5-8.5C1 9.5 2.5 6 6 6c2 0 3.2 1.2 4 2.3C10.8 7.2 12 6 14 6c3.5 0 5 3.5 3.5 6.5C19 16.65 12 21 12 21z"/></svg>
+      </div>
+    </div>
+    <div id="post-actions">
+      <button id="act-like" title="Like">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M12 21s-7-4.35-9.5-8.5C1 9.5 2.5 6 6 6c2 0 3.2 1.2 4 2.3C10.8 7.2 12 6 14 6c3.5 0 5 3.5 3.5 6.5C19 16.65 12 21 12 21z"/>
+        </svg>
+      </button>
+      <button id="act-chat" title="Comment">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M21 11.5a8.38 8.38 0 0 1-9 8.5 9 9 0 0 1-4-1L3 20l1-4a8.5 8.5 0 1 1 17-4.5z"/>
+        </svg>
+      </button>
+      <button id="act-super" title="Share">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/>
+        </svg>
+      </button>
+      <span class="spacer"></span>
+      <button id="act-pass" title="Save">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M19 21 12 16 5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+    </div>
+  </main>
+
+  <nav id="nav">
+    <button title="Home" id="nav-home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+      </svg>
+    </button>
+    <button title="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+      </svg>
+    </button>
+    <button title="Reels">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <rect x="3" y="3" width="18" height="18" rx="4"/><path d="m10 9 5 3-5 3z"/>
+      </svg>
+    </button>
+    <button title="Likes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M12 21s-7-4.35-9.5-8.5C1 9.5 2.5 6 6 6c2 0 3.2 1.2 4 2.3C10.8 7.2 12 6 14 6c3.5 0 5 3.5 3.5 6.5C19 16.65 12 21 12 21z"/>
+      </svg>
+    </button>
+    <button title="Profile"><span class="avatar"></span></button>
+  </nav>
+
+  <script src="shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+# สร้าง Xcode project ด้วย: xcodegen generate
+name: Instagram
+options:
+  createIntermediateGroups: true
+targets:
+  Instagram:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.prachayawut.gallery
+        PRODUCT_NAME: Instagram
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "5.9"
+        INFOPLIST_KEY_CFBundleDisplayName: PickleWatch
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: PickleWatch
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSLocationWhenInUseUsageDescription: ใช้ตำแหน่งเพื่อแสดงเนื้อหาใกล้คุณ
+        NSCameraUsageDescription: ใช้กล้องสำหรับอัปโหลดรูป
+        NSPhotoLibraryUsageDescription: ใช้คลังรูปสำหรับอัปโหลดรูป
+        NSMicrophoneUsageDescription: ใช้ไมโครโฟนสำหรับวิดีโอ
+        NSFaceIDUsageDescription: ใช้ Face ID เพื่อปลดล็อกแอป

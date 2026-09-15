@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mask of Sex - Liquid Glass & Easy IG Chat Interactive Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Plus Jakarta Sans', 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif; }
+    
+    .ig-brand {
+      font-family: "Snell Roundhand", "Brush Script MT", "Segoe Script", cursive;
+    }
+
+    .ig-gradient {
+      background: linear-gradient(45deg, #f09433, #dc2743, #bc1888);
+    }
+
+    .ig-dm-bubble-send {
+      background: linear-gradient(135deg, #3797f0, #9b51e0);
+    }
+
+    /* ================= LIQUID GLASS STYLES ================= */
+    .liquid-glass-surface {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(40px) saturate(220%);
+      -webkit-backdrop-filter: blur(40px) saturate(220%);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 
+        inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -1px 1.5px 0 rgba(0, 0, 0, 0.3),
+        0 20px 45px -10px rgba(0, 0, 0, 0.65);
+    }
+
+    .liquid-glass-pill {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(24px) saturate(200%);
+      -webkit-backdrop-filter: blur(24px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 
+        inset 0 1px 2px 0 rgba(255, 255, 255, 0.7),
+        inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25),
+        0 6px 18px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .liquid-glass-pill:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .liquid-droplet-burst {
+      animation: dropletPop 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes dropletPop {
+      0% { transform: scale(0.3); opacity: 0; }
+      35% { transform: scale(1.1); opacity: 1; }
+      60% { transform: scale(1.0); opacity: 1; }
+      100% { transform: scale(1.25); opacity: 0; filter: blur(6px); }
+    }
+
+    /* Heart Pop */
+    .ig-heart-pop { animation: igHeartAnim 0.75s ease forwards; }
+    @keyframes igHeartAnim {
+      0%   { opacity: 0; transform: scale(0.3); }
+      15%  { opacity: 1; transform: scale(1.2); }
+      30%  { transform: scale(1.0); }
+      70%  { opacity: 1; transform: scale(1.0); }
+      100% { opacity: 0; transform: scale(0.9); }
+    }
+
+    /* Tinder Stamps */
+    .tinder-like-stamp {
+      border: 4px solid #22c55e;
+      color: #22c55e;
+      transform: rotate(-15deg);
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-radius: 8px;
+      padding: 4px 12px;
+    }
+    .tinder-nope-stamp {
+      border: 4px solid #ef4444;
+      color: #ef4444;
+      transform: rotate(15deg);
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border-radius: 8px;
+      padding: 4px 12px;
+    }
+
+    /* Stamp Pop */
+    .stamp-pop { animation: stampAnim 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes stampAnim {
+      0% { opacity: 0; transform: scale(0.5) rotate(-8deg); }
+      50% { opacity: 1; transform: scale(1.1) rotate(-4deg); }
+      75% { transform: scale(0.98) rotate(-4deg); }
+      100% { opacity: 0; transform: scale(1) translateY(-20px) rotate(-4deg); }
+    }
+
+    /* Card Swipe Animations */
+    .card-swipe-right {
+      animation: swipeRightAnim 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    @keyframes swipeRightAnim {
+      to { transform: translate(120%, 30px) rotate(25deg); opacity: 0; }
+    }
+    .card-swipe-left {
+      animation: swipeLeftAnim 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+    @keyframes swipeLeftAnim {
+      to { transform: translate(-120%, 30px) rotate(-25deg); opacity: 0; }
+    }
+
+    /* Chat slide-in / slide-out */
+    .chat-slide-enter {
+      animation: slideInRight 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideInRight {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-start p-4 antialiased selection:bg-cyan-500 selection:text-black">
+
+  <!-- Header Bar -->
+  <div class="max-w-5xl w-full my-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">DISGUISE SYSTEM V3</span>
+        <span class="text-xs text-slate-400 font-mono">Live Interactive Demo</span>
+      </div>
+      <h1 class="text-xl md:text-2xl font-extrabold mt-1 text-white tracking-tight flex items-center gap-2">
+        <span>หน้ากากพรางตัว: Liquid Glass, Instagram & Tinder</span>
+      </h1>
+      <p class="text-xs md:text-sm text-slate-400 mt-0.5">ทดสอบสลับโหมดได้อิสระ: แชท IG เต็มจอไม่ติดบัค, Liquid Glass ดูไม่เหมือนใคร, และโหมด Tinder ดั้งเดิม</p>
+    </div>
+
+    <!-- Mode Selector Controls -->
+    <div class="flex flex-wrap items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800">
+      <button onclick="setTheme('liquid')" id="btn-theme-liquid" class="px-3 py-1.5 text-xs font-bold rounded-xl transition bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30 flex items-center gap-1.5">
+        <span>💎 Liquid Glass</span>
+      </button>
+      <button onclick="setTheme('instagram')" id="btn-theme-ig" class="px-3 py-1.5 text-xs font-semibold rounded-xl transition text-slate-400 hover:text-white flex items-center gap-1.5">
+        <span>📸 Instagram</span>
+      </button>
+      <button onclick="openIGChatDirect()" id="btn-theme-ig-chat" class="px-3 py-1.5 text-xs font-semibold rounded-xl transition text-pink-400 hover:text-white flex items-center gap-1.5">
+        <span>💬 แชท IG Direct</span>
+      </button>
+      <button onclick="setTheme('tinder')" id="btn-theme-tinder" class="px-3 py-1.5 text-xs font-semibold rounded-xl transition text-rose-400 hover:text-white flex items-center gap-1.5">
+        <span>🔥 Tinder (เดิม)</span>
+      </button>
+      <button onclick="setTheme('talentflow')" id="btn-theme-tf" class="px-3 py-1.5 text-xs font-semibold rounded-xl transition text-slate-400 hover:text-white flex items-center gap-1">
+        <span>👔 TalentFlow</span>
+      </button>
+      <button onclick="toggleRealDecoy(true)" id="btn-theme-decoy" class="px-3 py-1.5 text-xs font-semibold rounded-xl transition text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-1">
+        <span>⚡ Decoy จริง</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-8">
+    
+    <!-- Phone Mockup Container -->
+    <div class="lg:col-span-6 flex justify-center">
+      <div class="relative w-[380px] h-[780px] bg-slate-900 rounded-[50px] p-3 shadow-2xl ring-1 ring-slate-800 border-4 border-slate-700/60 overflow-hidden select-none">
+        
+        <!-- iPhone Dynamic Island -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-950 rounded-b-2xl z-50 flex items-center justify-center pointer-events-none">
+          <div class="w-3 h-3 rounded-full bg-slate-900/90 mr-3"></div>
+          <div class="w-10 h-2.5 rounded-full bg-slate-900/90"></div>
+        </div>
+
+        <!-- Phone Screen Viewport -->
+        <div id="phone-screen" class="w-full h-full bg-slate-950 rounded-[40px] overflow-hidden relative text-slate-100 border border-slate-800/80">
+
+          <!-- ================= 1. LIQUID GLASS VIEW (ดูยังไงก็ไม่ใช่ Tinder หรือ IG) ================= -->
+          <div id="view-liquid" class="absolute inset-0 flex flex-col h-full bg-black text-white overflow-hidden z-10">
+            <!-- Background Image & Tap Surface -->
+            <div id="liquid-media-frame" class="absolute inset-0 z-0 overflow-hidden cursor-pointer" onclick="handleTapLiquidMedia()">
+              <img id="liquid-cand-photo" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80" class="w-full h-full object-cover transition-transform duration-300" />
+              <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/85 pointer-events-none"></div>
+
+              <!-- Liquid Droplet Burst Effect -->
+              <div id="liquid-droplet-effect" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden z-30">
+                <div class="liquid-droplet-burst w-36 h-36 rounded-full liquid-glass-surface flex flex-col items-center justify-center border border-cyan-300/60 shadow-2xl shadow-cyan-500/40">
+                  <div class="w-12 h-12 rounded-full bg-cyan-400/20 flex items-center justify-center text-cyan-300 mb-1">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <span class="text-[11px] font-extrabold tracking-widest text-cyan-200">SAVED</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Header Glass Capsule -->
+            <div class="relative z-10 pt-8 px-4 pb-2">
+              <div class="liquid-glass-surface rounded-2xl px-3.5 py-2 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center text-white font-black text-xs shadow-inner">LF</div>
+                  <span class="font-bold text-xs text-white tracking-wide">Lumina Flow</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] bg-white/10 px-2 py-0.5 rounded-full border border-white/20 text-cyan-200">Design 4K</span>
+                  <button onclick="setTheme('tinder')" title="ดูเบื้องหลัง Tinder" class="text-xs text-slate-400 hover:text-white">⚙</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Spacer pushes controls down -->
+            <div class="flex-1 pointer-events-none"></div>
+
+            <!-- Candidate Info Glass Panel -->
+            <div class="relative z-10 px-4 pb-2">
+              <div class="liquid-glass-surface rounded-2xl p-3.5 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span id="liquid-cand-name" class="font-bold text-sm text-white">Jessica Wong · 26</span>
+                    <div class="text-[10px] text-cyan-200/80 font-medium">Digital Creator · Visual Designer</div>
+                  </div>
+                  <button onclick="openIGChatDirect()" title="ส่งข้อความ" class="w-8 h-8 rounded-full liquid-glass-pill flex items-center justify-center text-cyan-300">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-300 leading-tight">Bangkok, Thailand • Specialty coffee, film photography & street vibes ☕📸</p>
+              </div>
+            </div>
+
+            <!-- Bottom Floating Glass Pill Action Bar -->
+            <div class="relative z-10 px-4 pb-4">
+              <div class="liquid-glass-surface rounded-full p-1.5 flex items-center justify-between gap-1.5">
+                <button onclick="swipeCard('left')" class="liquid-glass-pill flex-1 py-2.5 flex items-center justify-center text-rose-300 text-[11px] font-bold gap-1">
+                  <span>✕</span> <span>Pass</span>
+                </button>
+                <button onclick="openIGChatDirect()" class="liquid-glass-pill flex-1 py-2.5 flex items-center justify-center text-cyan-300 text-[11px] font-bold gap-1">
+                  <span>💬</span> <span>Connect</span>
+                </button>
+                <button onclick="triggerLiquidLike()" class="liquid-glass-pill flex-1 py-2.5 flex items-center justify-center text-cyan-200 bg-cyan-500/20 text-[11px] font-extrabold gap-1">
+                  <span>💎</span> <span>Collect</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= 2. INSTAGRAM FEED VIEW (พรางแบบ IG ดั้งเดิม) ================= -->
+          <div id="view-ig" class="hidden absolute inset-0 flex flex-col h-full bg-white text-neutral-900 z-10">
+            <!-- Instagram Header -->
+            <div class="pt-8 px-4 pb-2 bg-white border-b border-neutral-200 flex items-center justify-between">
+              <div class="ig-brand text-2xl font-bold text-neutral-900 pt-1">Instagram</div>
+              <div class="flex items-center gap-4 text-neutral-800">
+                <button onclick="swipeCard('left')" class="hover:opacity-70" title="ข้าม">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-7-4.35-9.5-8.5C1 9.5 2.5 6 6 6c2 0 3.2 1.2 4 2.3C10.8 7.2 12 6 14 6c3.5 0 5 3.5 3.5 6.5C19 16.65 12 21 12 21z"/></svg>
+                </button>
+                <!-- Direct Chat Button at Top Right -->
+                <button onclick="openIGChatDirect()" title="แตะเพื่อเปิดแชท IG Direct ทันที!" class="relative hover:opacity-70 active:scale-95 transition">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 0 1-9 8.5 9 9 0 0 1-4-1L3 20l1-4a8.5 8.5 0 1 1 17-4.5z"/></svg>
+                  <span class="absolute -top-1 -right-1.5 px-1.5 py-0.2 bg-[#ff304f] text-white text-[9px] font-bold rounded-full animate-pulse">3</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Instagram Post Head -->
+            <div class="px-3.5 py-2.5 bg-white border-b border-neutral-200 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full p-[2px] ig-gradient flex items-center justify-center">
+                  <img id="ig-cand-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-full h-full rounded-full object-cover border-[1.5px] border-white" />
+                </div>
+                <span id="ig-cand-name" class="text-xs font-bold text-neutral-900">Jessica Wong · 26</span>
+              </div>
+              <span class="text-neutral-700 text-xs font-bold">•••</span>
+            </div>
+
+            <!-- Media Container -->
+            <div id="ig-media-frame" class="flex-1 relative bg-black overflow-hidden cursor-pointer" onclick="handleTapIGMedia()">
+              <img id="ig-cand-photo" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80" class="w-full h-full object-cover" />
+
+              <div id="ig-heart-burst" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden">
+                <svg class="w-24 h-24 text-white drop-shadow-2xl ig-heart-pop" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              </div>
+            </div>
+
+            <!-- Action Row -->
+            <div class="px-3.5 py-2.5 bg-white border-t border-b border-neutral-200 flex items-center justify-between text-neutral-900">
+              <div class="flex items-center gap-4">
+                <button id="ig-like-btn" onclick="triggerIGLike()" title="ถูกใจ"><svg id="ig-like-icon" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-7-4.35-9.5-8.5C1 9.5 2.5 6 6 6c2 0 3.2 1.2 4 2.3C10.8 7.2 12 6 14 6c3.5 0 5 3.5 3.5 6.5C19 16.65 12 21 12 21z"/></svg></button>
+                
+                <!-- Chat action icon: clicks into seamless Direct Chat -->
+                <button onclick="openIGChatDirect()" title="เปิดแชทกับคนนี้ทันที" class="hover:opacity-70 active:scale-110 transition text-neutral-900">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 0 1-9 8.5 9 9 0 0 1-4-1L3 20l1-4a8.5 8.5 0 1 1 17-4.5z"/></svg>
+                </button>
+
+                <button onclick="triggerIGLike()" title="Super Like"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+              </div>
+              <button onclick="swipeCard('left')" title="ข้ามการ์ด"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+            </div>
+
+            <!-- Bottom Nav -->
+            <div class="px-3 py-2 bg-white border-t border-neutral-200 flex items-center justify-around text-neutral-900">
+              <button class="hover:opacity-70"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
+              <button class="hover:opacity-70"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></button>
+              <button onclick="toggleRealDecoy(true)" title="เปิดโหมด Decoy" class="w-7 h-7 rounded-lg bg-neutral-100 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg></button>
+              <button onclick="openIGChatDirect()" class="hover:opacity-70 relative">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-7-4.35-9.5-8.5C1 9.5 2.5 6 6 6c2 0 3.2 1.2 4 2.3C10.8 7.2 12 6 14 6c3.5 0 5 3.5 3.5 6.5C19 16.65 12 21 12 21z"/></svg>
+                <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#ff304f]"></span>
+              </button>
+              <button class="w-6 h-6 rounded-full p-[1px] border border-neutral-900 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80" class="w-full h-full object-cover rounded-full" />
+              </button>
+            </div>
+          </div>
+
+          <!-- ================= 3. ORIGINAL TINDER VIEW (ดูหน้าตาจริงของ Tinder ดั้งเดิม) ================= -->
+          <div id="view-tinder" class="hidden absolute inset-0 flex flex-col h-full bg-[#111418] text-white z-10">
+            <!-- Tinder Top Header -->
+            <div class="pt-8 px-4 pb-2 bg-[#111418] flex items-center justify-between border-b border-neutral-800">
+              <div class="flex items-center gap-1.5">
+                <span class="text-rose-500 font-extrabold text-xl tracking-tight flex items-center gap-1">
+                  <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12.6 1.4c.3 1.8-.7 3.5-2 4.4-1.2.9-2 2.3-2 3.8 0 2.2 1.8 4 4 4s4-1.8 4-4c0-.7-.2-1.4-.5-2 2.2 1.3 3.9 3.6 3.9 6.4 0 4.4-3.6 8-8 8s-8-3.6-8-8c0-4.6 3.2-8.4 7.6-9.6.3-.1.7-.1 1 0 .2.2.4.6.3.9z"/></svg>
+                  <span>tinder</span>
+                </span>
+              </div>
+              <span class="text-[10px] bg-rose-500/20 text-rose-400 font-bold px-2 py-0.5 rounded-full border border-rose-500/40">RAW WEBVIEW</span>
+            </div>
+
+            <!-- Card stack container -->
+            <div class="flex-1 p-3 flex flex-col items-center justify-center relative">
+              <div id="tinder-card" class="w-full h-full rounded-2xl overflow-hidden relative shadow-2xl bg-neutral-900 border border-neutral-800">
+                <img id="tinder-cand-photo" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80" class="w-full h-full object-cover" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+
+                <!-- Stamps -->
+                <div id="tinder-like-badge" class="absolute top-6 left-6 tinder-like-stamp hidden">LIKE</div>
+                <div id="tinder-nope-badge" class="absolute top-6 right-6 tinder-nope-stamp hidden">NOPE</div>
+
+                <!-- Info at bottom of card -->
+                <div class="absolute bottom-4 left-4 right-4">
+                  <div class="flex items-baseline gap-2">
+                    <span id="tinder-cand-name" class="text-xl font-bold text-white">Jessica Wong</span>
+                    <span class="text-lg font-light text-slate-300">26</span>
+                  </div>
+                  <div class="text-xs text-slate-400 mt-1">📍 Bangkok • 3 kilometers away</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tinder Action Buttons (Rewind, Nope, SuperLike, Like, Boost) -->
+            <div class="px-4 pb-4 pt-1 flex items-center justify-center gap-3">
+              <button onclick="swipeCard('left')" class="w-12 h-12 rounded-full bg-neutral-900 border border-neutral-700 flex items-center justify-center text-amber-500 shadow-lg active:scale-90 transition">
+                ↺
+              </button>
+              <button onclick="swipeCard('left')" class="w-14 h-14 rounded-full bg-neutral-900 border-2 border-rose-500/80 flex items-center justify-center text-rose-500 font-bold text-xl shadow-lg active:scale-90 transition">
+                ✕
+              </button>
+              <button onclick="triggerTinderLike(true)" class="w-11 h-11 rounded-full bg-neutral-900 border border-sky-400 flex items-center justify-center text-sky-400 text-lg shadow-lg active:scale-90 transition">
+                ★
+              </button>
+              <button onclick="swipeCard('right')" class="w-14 h-14 rounded-full bg-neutral-900 border-2 border-emerald-400 flex items-center justify-center text-emerald-400 font-bold text-xl shadow-lg active:scale-90 transition">
+                ♥
+              </button>
+              <button onclick="triggerTinderLike(false)" class="w-12 h-12 rounded-full bg-neutral-900 border border-purple-400 flex items-center justify-center text-purple-400 shadow-lg active:scale-90 transition">
+                ⚡
+              </button>
+            </div>
+          </div>
+
+          <!-- ================= 4. TALENTFLOW ATS VIEW (พรางเป็นโปรแกรมคัดเลือกผู้สมัคร) ================= -->
+          <div id="view-tf" class="hidden absolute inset-0 flex flex-col h-full bg-slate-950 text-slate-100 z-10">
+            <div class="pt-8 px-4 pb-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xs">TF</div>
+                <span class="font-bold text-sm text-white">TalentFlow ATS</span>
+              </div>
+              <span class="text-[11px] bg-slate-800 text-slate-300 px-2 py-1 rounded-md">Design & Tech ▾</span>
+            </div>
+
+            <div class="px-3.5 py-2.5 bg-slate-900/60 border-b border-slate-800 flex items-center justify-between">
+              <span id="tf-cand-name" class="text-xs font-bold text-white">Jessica Wong · 26</span>
+              <span class="px-2 py-0.5 text-[10px] font-medium bg-slate-800 text-indigo-300 rounded">Review</span>
+            </div>
+
+            <div id="tf-media-frame" class="flex-1 relative bg-slate-950 overflow-hidden cursor-pointer" onclick="handleTapTFMedia()">
+              <img id="tf-cand-photo" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80" class="w-full h-full object-cover" />
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 pointer-events-none"></div>
+
+              <div id="tf-stamp" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden">
+                <div class="stamp-pop px-4 py-2 border-2 border-emerald-400 bg-emerald-950/90 rounded-lg text-emerald-400 font-extrabold text-sm tracking-wider">
+                  SHORTLISTED
+                </div>
+              </div>
+            </div>
+
+            <div class="px-3 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between">
+              <button onclick="swipeCard('left')" class="flex-1 py-2 flex flex-col items-center gap-0.5 text-slate-400"><span class="text-[10px]">✕ Archive</span></button>
+              <button onclick="openIGChatDirect()" class="flex-1 py-2 flex flex-col items-center gap-0.5 text-slate-400"><span class="text-[10px]">💬 Message</span></button>
+              <button onclick="triggerTFShortlist()" class="flex-1 py-2 flex flex-col items-center gap-0.5 text-emerald-400 font-bold"><span class="text-[10px]">✓ Shortlist</span></button>
+            </div>
+          </div>
+
+          <!-- ================= 5. SEAMLESS INSTAGRAM DIRECT CHAT VIEW (แชทเต็มจอ ไม่บีบเลย์เอาต์) ================= -->
+          <div id="view-ig-chat" class="hidden absolute inset-0 flex flex-col h-full bg-white text-neutral-900 z-30 chat-slide-enter">
+            
+            <!-- Direct Chat Header with Back Button -->
+            <div class="pt-8 px-3 pb-2.5 bg-white border-b border-neutral-200 flex items-center justify-between shrink-0">
+              <div class="flex items-center gap-2">
+                <!-- Back Button to return to feed -->
+                <button onclick="closeIGChatDirect()" class="p-1.5 hover:bg-neutral-100 rounded-full active:scale-95 transition text-neutral-900" title="ย้อนกลับ">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <div class="relative cursor-pointer" onclick="closeIGChatDirect()">
+                  <img id="chat-partner-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-9 h-9 rounded-full object-cover border border-neutral-200" />
+                  <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                </div>
+                <div>
+                  <div class="font-bold text-xs text-neutral-900 flex items-center gap-1">
+                    <span id="chat-partner-name">Jessica Wong</span>
+                    <svg class="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                  </div>
+                  <div class="text-[10px] text-neutral-400 font-medium">Active 12m ago</div>
+                </div>
+              </div>
+
+              <!-- Call icons -->
+              <div class="flex items-center gap-3 text-neutral-800 pr-1">
+                <svg class="w-5 h-5 hover:text-neutral-500 cursor-pointer" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                <svg class="w-5 h-5 hover:text-neutral-500 cursor-pointer" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </div>
+            </div>
+
+            <!-- Conversation Messages Body (Scrollable full height) -->
+            <div id="chat-messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#fafafa]">
+              <div class="text-center my-2">
+                <span class="text-[10px] text-neutral-400 bg-neutral-200/60 px-2.5 py-0.5 rounded-full font-medium">TODAY 9:42 PM</span>
+              </div>
+
+              <!-- Partner Message 1 -->
+              <div class="flex items-end gap-2">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80" class="w-6 h-6 rounded-full object-cover mb-1 shrink-0" />
+                <div class="max-w-[75%] bg-neutral-200 text-neutral-900 text-xs px-3.5 py-2.5 rounded-2xl rounded-bl-sm leading-relaxed">
+                  สวัสดีครับ! พอดีเห็นรูปในโปรไฟล์ ชอบสไตล์แต่งรูปโทนฟิล์มมากเลย ✨
+                </div>
+              </div>
+
+              <!-- User Sent Message 1 -->
+              <div class="flex items-end justify-end gap-2">
+                <div class="max-w-[75%] ig-dm-bubble-send text-white text-xs px-3.5 py-2.5 rounded-2xl rounded-br-sm leading-relaxed shadow-sm">
+                  ขอบคุณมากเลยครับ! คาเฟ่นี้แถวอารีย์ แสงช่วงบ่ายดีมาก ☕ ถ่ายเล่นๆ เพลินดี
+                </div>
+              </div>
+
+              <!-- Partner Message 2 -->
+              <div class="flex items-end gap-2">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80" class="w-6 h-6 rounded-full object-cover mb-1 shrink-0" />
+                <div class="max-w-[75%] bg-neutral-200 text-neutral-900 text-xs px-3.5 py-2.5 rounded-2xl rounded-bl-sm leading-relaxed">
+                  เสาร์นี้ว่าจะไปแถวนั้นพอดี มีร้านไหนกาแฟเด็ดๆ แนะนำไหมครับ? 🥐
+                </div>
+              </div>
+
+              <!-- Dynamic messages will be appended here -->
+              <div id="dynamic-messages"></div>
+            </div>
+
+            <!-- Bottom Direct Input Bar -->
+            <div class="p-2.5 bg-white border-t border-neutral-200 flex items-center gap-2 shrink-0">
+              <button class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-sm shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </button>
+              
+              <div class="flex-1 relative flex items-center">
+                <input id="chat-input-text" type="text" placeholder="Message..." class="w-full bg-neutral-100 border border-neutral-200 text-neutral-900 text-xs py-2 pl-3.5 pr-12 rounded-full focus:outline-none focus:border-neutral-400" onkeydown="if(event.key==='Enter') sendMockMessage()" />
+                <button onclick="sendMockMessage()" class="absolute right-2 text-blue-500 font-bold text-xs hover:opacity-80 px-1 py-0.5">
+                  Send
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2 text-neutral-700 pr-1 shrink-0">
+                <svg onclick="sendMockHeart()" class="w-5 h-5 text-rose-500 hover:scale-110 active:scale-125 transition cursor-pointer" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ================= 6. REAL DECOY OVERLAY (หน้า Instagram ของจริง + ปุ่มลอย AssistiveTouch) ================= -->
+          <div id="view-real-decoy" class="hidden absolute inset-0 z-40 bg-black flex flex-col">
+            <div class="pt-8 px-4 pb-2 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between text-white shrink-0">
+              <div class="ig-brand text-xl">Instagram (Real Feed)</div>
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono">DECOY ACTIVE</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-1 grid grid-cols-3 gap-1 bg-black">
+              <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80" class="w-full h-28 object-cover" />
+              <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&auto=format&fit=crop&q=80" class="w-full h-28 object-cover" />
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80" class="w-full h-28 object-cover" />
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80" class="w-full h-28 object-cover" />
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80" class="w-full h-28 object-cover" />
+              <img src="https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=300&auto=format&fit=crop&q=80" class="w-full h-28 object-cover" />
+            </div>
+
+            <!-- DRAGGABLE FLOATING ASSISTIVETOUCH BUTTON -->
+            <button onclick="toggleRealDecoy(false)" title="กดเพื่อสลับกลับ" class="absolute top-24 right-4 w-12 h-12 rounded-full liquid-glass-surface flex items-center justify-center text-white font-bold active:scale-110 transition cursor-pointer z-50 shadow-2xl border-white/40">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+            </button>
+            <div class="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
+              <span class="text-[11px] bg-black/80 px-3 py-1 rounded-full text-white/90 border border-white/20">แตะปุ่มลอย ↩ ด้านบนขวาเพื่อสลับกลับ</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Controls Panel -->
+    <div class="lg:col-span-6 space-y-4">
+      
+      <!-- Current State Badge Card -->
+      <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">สถานะที่กำลังแสดง:</span>
+          <span id="active-state-badge" class="px-2.5 py-1 text-xs font-extrabold rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+            💎 Liquid Glass (ดูไม่เหมือน Tinder/IG)
+          </span>
+        </div>
+        <p id="active-state-desc" class="text-xs text-slate-300 leading-relaxed">
+          โหมด <strong>Liquid Glass</strong> ใช้สไตล์ VisionOS / iOS 18 กระจกแก้วใส Frosted Glass ส่องแสงสะท้อนหรูหรา ซ่อนแบรนด์ Tinder และ IG ทั้งหมด ใครมองผ่านๆ จะนึกว่าเป็นแอป Creative Portfolio หรือ Gallery งานศิลป์
+        </p>
+      </div>
+
+      <!-- Quick Interactive Testing Controls -->
+      <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider text-slate-300">ทดสอบฟังก์ชัน (Interactive Testing)</h3>
+        
+        <div class="grid grid-cols-2 gap-2.5">
+          <button onclick="openIGChatDirect()" class="p-3 rounded-xl bg-pink-600/30 hover:bg-pink-600/40 border border-pink-500/40 text-left transition flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-lg bg-pink-500/30 text-pink-300 flex items-center justify-center font-bold text-xs">💬</span>
+            <div>
+              <div class="text-xs font-bold text-white">ทดสอบเปิดแชท IG</div>
+              <div class="text-[10px] text-pink-200">เปิดแชทเต็มความสูงทันที</div>
+            </div>
+          </button>
+
+          <button onclick="swipeCard('right')" class="p-3 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/40 border border-emerald-500/40 text-left transition flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-lg bg-emerald-500/30 text-emerald-300 flex items-center justify-center font-bold text-xs">♥</span>
+            <div>
+              <div class="text-xs font-bold text-white">ปัดขวา (Like / Collect)</div>
+              <div class="text-[10px] text-emerald-200">แอนิเมชันปัดการ์ดไปคนถัดไป</div>
+            </div>
+          </button>
+
+          <button onclick="swipeCard('left')" class="p-3 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/30 text-left transition flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-lg bg-rose-500/30 text-rose-300 flex items-center justify-center font-bold text-xs">✕</span>
+            <div>
+              <div class="text-xs font-bold text-white">ปัดซ้าย (Pass / Archive)</div>
+              <div class="text-[10px] text-rose-200">ข้ามคนนี้ทันที</div>
+            </div>
+          </button>
+
+          <button onclick="toggleRealDecoy(true)" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left transition flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">⚡</span>
+            <div>
+              <div class="text-xs font-bold text-white">Decoy ฉุกเฉิน</div>
+              <div class="text-[10px] text-slate-400">Instagram จริงพร้อมปุ่มลอย</div>
+            </div>
+          </button>
+        </div>
+
+        <div class="pt-2">
+          <label class="text-[11px] text-slate-400 block mb-1">ทดลองพิมพ์ข้อความส่งในแชท:</label>
+          <div class="flex gap-2">
+            <input id="demo-quick-msg" type="text" value="ร้านกาแฟเปิด 9 โมงเช้าครับ เจอกันนะ! ☕" class="flex-1 bg-slate-800 text-xs px-3 py-2 rounded-xl border border-slate-700 text-white" />
+            <button onclick="sendQuickMessageFromPanel()" class="px-3.5 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-xl text-xs font-bold transition">
+              ส่งข้อความ
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explanations & Solved Bugs -->
+      <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-2.5">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider text-cyan-400">รายการบัคที่แก้ไขในเวอร์ชันนี้:</h3>
+        
+        <ul class="text-xs space-y-2 text-slate-300">
+          <li class="flex items-start gap-2">
+            <span class="text-cyan-400 mt-0.5 font-bold">✔</span>
+            <span><strong>แก้ Flex Collision ในหน้าแชท:</strong> ย้ายหน้าต่างแชทเป็น Full-height Overlay (`absolute inset-0 z-30`) ทำให้เมื่อเปิดแชทจะไม่เกิดการบีบอัดหน้าจอ feed ให้กลายเป็น 50% อีกต่อไป</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyan-400 mt-0.5 font-bold">✔</span>
+            <span><strong>แก้ Missing `flex` Display:</strong> เติมคลาส `flex flex-col` ให้ทุกโหมดเพื่อไม่ให้ fallback ไปเป็น block layout ซึ่งเคยทำให้ปุ่มลอยหรือเลย์เอาต์กระจกผิดตำแหน่ง</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyan-400 mt-0.5 font-bold">✔</span>
+            <span><strong>คืนโหมดสลับ Tinder ดั้งเดิม:</strong> เพิ่มแท็บ 🔥 Tinder (เดิม) ให้สลับดูเปรียบเทียบได้ตามที่ต้องการ</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyan-400 mt-0.5 font-bold">✔</span>
+            <span><strong>Sync ทุกปุ่มและ Badge:</strong> เมื่อกดเปลี่ยนโหมด แถบสถานะด้านขวาและปุ่มไฮไลท์ด้านบนจะอัปเดตสีและข้อความตรงกัน 100%</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const candidates = [
+      {
+        name: "Jessica Wong · 26",
+        photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
+        bio: "Bangkok, Thailand • Specialty coffee, film photography & street vibes ☕📸"
+      },
+      {
+        name: "Pimrada K. · 24",
+        photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&auto=format&fit=crop&q=80",
+        bio: "UX Designer @ Tech Startup • Dog lover & Weekend cyclist 🚲"
+      },
+      {
+        name: "Elena Rostova · 27",
+        photo: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&auto=format&fit=crop&q=80",
+        bio: "Art Curator • Traveling between Paris, Tokyo & Bangkok ✈️🎨"
+      }
+    ];
+
+    let currentIdx = 0;
+    let currentTheme = 'liquid';
+    let lastTapTime = 0;
+
+    function renderAll() {
+      const c = candidates[currentIdx];
+
+      // Liquid Glass
+      document.getElementById('liquid-cand-name').textContent = c.name;
+      document.getElementById('liquid-cand-photo').src = c.photo;
+
+      // IG Feed
+      document.getElementById('ig-cand-name').textContent = c.name;
+      document.getElementById('ig-cand-avatar').src = c.photo;
+      document.getElementById('ig-cand-photo').src = c.photo;
+      document.getElementById('ig-like-icon').setAttribute('fill', 'none');
+      document.getElementById('ig-like-icon').classList.remove('text-[#ed4956]');
+
+      // Chat Partner
+      document.getElementById('chat-partner-name').textContent = c.name.split(' · ')[0];
+      document.getElementById('chat-partner-avatar').src = c.photo;
+
+      // Tinder
+      document.getElementById('tinder-cand-name').textContent = c.name.split(' · ')[0];
+      document.getElementById('tinder-cand-photo').src = c.photo;
+
+      // TalentFlow
+      document.getElementById('tf-cand-name').textContent = c.name;
+      document.getElementById('tf-cand-photo').src = c.photo;
+    }
+
+    function swipeCard(direction) {
+      if (currentTheme === 'tinder') {
+        const likeBadge = document.getElementById('tinder-like-badge');
+        const nopeBadge = document.getElementById('tinder-nope-badge');
+        if (direction === 'right') {
+          likeBadge.classList.remove('hidden');
+          setTimeout(() => likeBadge.classList.add('hidden'), 400);
+        } else {
+          nopeBadge.classList.remove('hidden');
+          setTimeout(() => nopeBadge.classList.add('hidden'), 400);
+        }
+      }
+
+      currentIdx = (currentIdx + 1) % candidates.length;
+      renderAll();
+    }
+
+    function triggerIGLike() {
+      const burst = document.getElementById('ig-heart-burst');
+      const icon = document.getElementById('ig-like-icon');
+      icon.setAttribute('fill', '#ed4956');
+      icon.classList.add('text-[#ed4956]');
+      burst.classList.remove('hidden');
+      setTimeout(() => burst.classList.add('hidden'), 750);
+      setTimeout(() => swipeCard('right'), 450);
+    }
+
+    function triggerLiquidLike() {
+      const burst = document.getElementById('liquid-droplet-effect');
+      burst.classList.remove('hidden');
+      setTimeout(() => burst.classList.add('hidden'), 700);
+      setTimeout(() => swipeCard('right'), 450);
+    }
+
+    function triggerTinderLike(isSuper) {
+      const likeBadge = document.getElementById('tinder-like-badge');
+      likeBadge.textContent = isSuper ? 'SUPER LIKE' : 'LIKE';
+      likeBadge.classList.remove('hidden');
+      setTimeout(() => {
+        likeBadge.classList.add('hidden');
+        swipeCard('right');
+      }, 400);
+    }
+
+    function triggerTFShortlist() {
+      const stamp = document.getElementById('tf-stamp');
+      stamp.classList.remove('hidden');
+      setTimeout(() => stamp.classList.add('hidden'), 650);
+      setTimeout(() => swipeCard('right'), 400);
+    }
+
+    function handleTapIGMedia() {
+      const now = Date.now();
+      if (now - lastTapTime < 350) {
+        triggerIGLike();
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
+    }
+
+    function handleTapLiquidMedia() {
+      const now = Date.now();
+      if (now - lastTapTime < 350) {
+        triggerLiquidLike();
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
+    }
+
+    function handleTapTFMedia() {
+      const now = Date.now();
+      if (now - lastTapTime < 350) {
+        triggerTFShortlist();
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
+    }
+
+    function toggleRealDecoy(show) {
+      const decoy = document.getElementById('view-real-decoy');
+      const badge = document.getElementById('active-state-badge');
+      const desc = document.getElementById('active-state-desc');
+      if (show) {
+        decoy.classList.remove('hidden');
+        badge.className = "px-2.5 py-1 text-xs font-extrabold rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+        badge.textContent = "⚡ Real Decoy Active (Instagram จริง)";
+        desc.innerHTML = "โหมด <strong>Decoy จริง</strong> ซ่อนทุกหน้าจออย่างฉุกเฉิน เปิดฟีด Instagram หรือเว็บไซต์ของจริง สามารถแตะปุ่มลอย <code class='text-emerald-300'>↩</code> เพื่อสลับกลับมาได้ทันที";
+      } else {
+        decoy.classList.add('hidden');
+        setTheme(currentTheme);
+      }
+    }
+
+    function openIGChatDirect() {
+      const chat = document.getElementById('view-ig-chat');
+      chat.classList.remove('hidden');
+
+      const badge = document.getElementById('active-state-badge');
+      const desc = document.getElementById('active-state-desc');
+      badge.className = "px-2.5 py-1 text-xs font-extrabold rounded-lg bg-pink-500/20 text-pink-300 border border-pink-500/40";
+      badge.textContent = "💬 แชทง่าย เต็มจอ (IG Direct Mode)";
+      desc.innerHTML = "หน้าแชท <strong>Instagram Direct เต็มความสูง</strong>: ตัดแถบโพสต์และปุ่ม Like ออกอย่างสมบูรณ์แบบ แป้นพิมพ์ไม่หลุดโฟกัส มีปุ่ม Back ที่มุมซ้ายบนเพื่อย้อนกลับมาหน้าหลักได้ใน 1 คลิก";
+
+      // Scroll to bottom
+      const scrollContainer = document.getElementById('chat-messages-container');
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+
+    function closeIGChatDirect() {
+      const chat = document.getElementById('view-ig-chat');
+      chat.classList.add('hidden');
+      setTheme(currentTheme);
+    }
+
+    function sendMockMessage() {
+      const input = document.getElementById('chat-input-text');
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendMessage(text, true);
+      input.value = '';
+
+      setTimeout(() => {
+        appendMessage("ดีเลยครับ! แล้วเจอกันนะ ☕✨", false);
+      }, 900);
+    }
+
+    function sendMockHeart() {
+      appendMessage("❤️", true);
+      setTimeout(() => {
+        appendMessage("😊✨", false);
+      }, 800);
+    }
+
+    function sendQuickMessageFromPanel() {
+      openIGChatDirect();
+      const text = document.getElementById('demo-quick-msg').value.trim();
+      if (!text) return;
+      appendMessage(text, true);
+      setTimeout(() => {
+        appendMessage("ได้เลยครับ! ทักมานึกว่าไม่ว่างคุยซะแล้ว 😊", false);
+      }, 900);
+    }
+
+    function appendMessage(text, isSend) {
+      const container = document.getElementById('dynamic-messages');
+      const msgDiv = document.createElement('div');
+      
+      if (isSend) {
+        msgDiv.className = "flex items-end justify-end gap-2 mt-2";
+        msgDiv.innerHTML = `<div class="max-w-[75%] ig-dm-bubble-send text-white text-xs px-3.5 py-2.5 rounded-2xl rounded-br-sm leading-relaxed shadow-sm">${escapeHtml(text)}</div>`;
+      } else {
+        msgDiv.className = "flex items-end gap-2 mt-2";
+        msgDiv.innerHTML = `<img src="${candidates[currentIdx].photo}" class="w-6 h-6 rounded-full object-cover mb-1 shrink-0" /><div class="max-w-[75%] bg-neutral-200 text-neutral-900 text-xs px-3.5 py-2.5 rounded-2xl rounded-bl-sm leading-relaxed">${escapeHtml(text)}</div>`;
+      }
+
+      container.appendChild(msgDiv);
+      const scrollContainer = document.getElementById('chat-messages-container');
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+
+    function escapeHtml(string) {
+      return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+        return ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;',
+          '/': '&#x2F;'
+        })[s];
+      });
+    }
+
+    function setTheme(theme) {
+      currentTheme = theme;
+      const chat = document.getElementById('view-ig-chat');
+      chat.classList.add('hidden');
+      toggleRealDecoy(false);
+
+      // Hide all views
+      document.getElementById('view-liquid').classList.add('hidden');
+      document.getElementById('view-ig').classList.add('hidden');
+      document.getElementById('view-tinder').classList.add('hidden');
+      document.getElementById('view-tf').classList.add('hidden');
+
+      // Reset button styles
+      const inactiveClass = "px-3 py-1.5 text-xs font-semibold rounded-xl transition text-slate-400 hover:text-white flex items-center gap-1.5";
+      document.getElementById('btn-theme-liquid').className = inactiveClass;
+      document.getElementById('btn-theme-ig').className = inactiveClass;
+      document.getElementById('btn-theme-ig-chat').className = inactiveClass;
+      document.getElementById('btn-theme-tinder').className = inactiveClass;
+      document.getElementById('btn-theme-tf').className = inactiveClass;
+
+      const badge = document.getElementById('active-state-badge');
+      const desc = document.getElementById('active-state-desc');
+
+      if (theme === 'liquid') {
+        document.getElementById('view-liquid').classList.remove('hidden');
+        document.getElementById('btn-theme-liquid').className = "px-3 py-1.5 text-xs font-bold rounded-xl transition bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30 flex items-center gap-1.5";
+        badge.className = "px-2.5 py-1 text-xs font-extrabold rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40";
+        badge.textContent = "💎 Liquid Glass (ดูไม่เหมือน Tinder/IG)";
+        desc.innerHTML = "โหมด <strong>Liquid Glass</strong> ใช้สไตล์ VisionOS / iOS 18 กระจกแก้วใส Frosted Glass ส่องแสงสะท้อนหรูหรา ซ่อนแบรนด์ Tinder และ IG ทั้งหมด ใครมองผ่านๆ จะนึกว่าเป็นแอป Creative Portfolio หรือ Gallery งานศิลป์";
+      } else if (theme === 'instagram') {
+        document.getElementById('view-ig').classList.remove('hidden');
+        document.getElementById('btn-theme-ig').className = "px-3 py-1.5 text-xs font-bold rounded-xl transition bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] text-white shadow-sm flex items-center gap-1.5";
+        badge.className = "px-2.5 py-1 text-xs font-extrabold rounded-lg bg-gradient-to-r from-[#f09433]/20 via-[#dc2743]/20 to-[#bc1888]/20 text-pink-300 border border-pink-500/40";
+        badge.textContent = "📸 Instagram Feed (พรางแบบ IG เดิม)";
+        desc.innerHTML = "โหมด <strong>Instagram Feed</strong> พรางโพสต์และโปรไฟล์ Tinder ให้เหมือนฟีดไอจีปกติ พร้อมปุ่มหัวใจและปุ่มแชทที่มุมบนขวา";
+      } else if (theme === 'tinder') {
+        document.getElementById('view-tinder').classList.remove('hidden');
+        document.getElementById('btn-theme-tinder').className = "px-3 py-1.5 text-xs font-bold rounded-xl transition bg-rose-600 text-white shadow-md shadow-rose-600/30 flex items-center gap-1.5";
+        badge.className = "px-2.5 py-1 text-xs font-extrabold rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40";
+        badge.textContent = "🔥 Tinder Raw (โครงสร้างจริงเบื้องหลัง)";
+        desc.innerHTML = "โหมด <strong>Tinder ดั้งเดิม</strong> แสดง UI จริงของ Tinder การ์ดโปรไฟล์ ระยะทาง และปุ่ม Nope / SuperLike / Like เพื่อเทียบให้เห็นว่าถูกพรางตัวอย่างไร";
+      } else if (theme === 'talentflow') {
+        document.getElementById('view-tf').classList.remove('hidden');
+        document.getElementById('btn-theme-tf').className = "px-3 py-1.5 text-xs font-semibold rounded-xl transition bg-indigo-600 text-white shadow-sm flex items-center gap-1.5";
+        badge.className = "px-2.5 py-1 text-xs font-extrabold rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/40";
+        badge.textContent = "👔 TalentFlow ATS (พรางแบบแอปสรรหาพนักงาน)";
+        desc.innerHTML = "โหมด <strong>TalentFlow ATS</strong> พรางว่ากำลังตรวจประวัติผู้สมัครงาน กด Shortlist หรือ Archive ได้เนียนตาที่สุดในที่ทำงาน";
+      }
+    }
+
+    renderAll();
+    setTheme('liquid');
+  </script>
+</body>
+</html>
