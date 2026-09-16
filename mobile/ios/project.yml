@@ -32,3 +32,6 @@ targets:
         NSPhotoLibraryUsageDescription: ใช้คลังรูปสำหรับอัปโหลดรูป
         NSMicrophoneUsageDescription: ใช้ไมโครโฟนสำหรับวิดีโอ
         NSFaceIDUsageDescription: ใช้ Face ID เพื่อปลดล็อกแอป
+        UIBackgroundModes: [fetch, processing]
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.prachayawut.gallery.fetchUpdates

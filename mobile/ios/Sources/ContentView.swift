@@ -10,9 +10,12 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            // เลือกระหว่างหน้าแชทเต็มจอ หรือหน้าฟีดหลัก
+            // เลือกระหว่างหน้าแชทเต็มจอ, หน้า Explore เต็มจอ, หรือหน้าฟีดหลัก
             if model.isInChat {
                 seamlessChatView
+                    .transition(.opacity)
+            } else if model.isExplore {
+                seamlessExploreView
                     .transition(.opacity)
             } else {
                 switch settings.disguiseMode {
@@ -33,6 +36,7 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: model.isInChat)
+        .animation(.easeInOut(duration: 0.2), value: model.isExplore)
         .animation(.easeInOut(duration: 0.2), value: settings.disguiseMode)
         .animation(.easeInOut(duration: 0.15), value: model.showRealInstagram)
         .background(currentBackground)
@@ -99,12 +103,23 @@ struct ContentView: View {
 
                 Spacer()
 
-                Button {
-                    showSettings = true
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .foregroundColor(.white)
-                        .padding(6)
+                HStack(spacing: 8) {
+                    Button {
+                        model.reloadTinder()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.9))
+                            .padding(6)
+                    }
+
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .foregroundColor(.white)
+                            .padding(6)
+                    }
                 }
             }
             .padding(.horizontal, 14)
@@ -114,6 +129,72 @@ struct ContentView: View {
             Divider().overlay(Color.white.opacity(0.15))
 
             // Full Height Chat Webview
+            WebViewRepresentable(webView: model.webView)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+        }
+    }
+
+    // =========================================================================
+    // 2. SEAMLESS EXPLORE VIEW (หน้า Explore เต็มจอ มีปุ่มกลับฟีด และปุ่มรีเฟรช)
+    // =========================================================================
+    private var seamlessExploreView: some View {
+        VStack(spacing: 0) {
+            // Explore Header
+            HStack(spacing: 12) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        model.backToFeed()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .bold))
+                        Text("หน้าหลัก")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundColor(.cyan)
+                }
+
+                Spacer()
+
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.cyan)
+                    Text("Explore")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+
+                Spacer()
+
+                HStack(spacing: 8) {
+                    Button {
+                        model.reloadTinder()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.9))
+                            .padding(6)
+                    }
+
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .foregroundColor(.white)
+                            .padding(6)
+                    }
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 48)
+            .background(Color(red: 0.08, green: 0.10, blue: 0.14))
+
+            Divider().overlay(Color.white.opacity(0.15))
+
+            // Full Height Explore Webview
             WebViewRepresentable(webView: model.webView)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.black)
@@ -144,8 +225,8 @@ struct ContentView: View {
 
             // Top Floating Frosted Glass Capsule
             VStack {
-                HStack(spacing: 12) {
-                    HStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(LinearGradient(colors: [.cyan, .indigo, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -161,6 +242,32 @@ struct ContentView: View {
 
                     Spacer()
 
+                    // Explore Button
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            model.openExplore()
+                        }
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.cyan)
+                            .frame(width: 28, height: 28)
+                            .background(Color.white.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+
+                    // Refresh Button
+                    Button {
+                        model.reloadTinder()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white.opacity(0.9))
+                            .frame(width: 28, height: 28)
+                            .background(Color.white.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+
                     // Quick Switch to REAL Instagram
                     Button {
                         withAnimation(.easeInOut(duration: 0.2)) {
@@ -174,7 +281,7 @@ struct ContentView: View {
                                 .font(.system(size: 11, weight: .black))
                         }
                         .foregroundColor(.white)
-                        .padding(.horizontal, 9)
+                        .padding(.horizontal, 8)
                         .padding(.vertical, 4.5)
                         .background(
                             LinearGradient(
@@ -209,7 +316,7 @@ struct ContentView: View {
                                 .font(.system(size: 9, weight: .bold))
                         }
                         .foregroundColor(.cyan)
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, 7)
                         .padding(.vertical, 4)
                         .background(Color.white.opacity(0.12))
                         .clipShape(Capsule())
@@ -223,10 +330,10 @@ struct ContentView: View {
                             .foregroundColor(.white.opacity(0.9))
                     }
                 }
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .liquidGlassSurface(cornerRadius: 22)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 12)
                 .padding(.top, 2)
 
                 Spacer()
@@ -242,15 +349,30 @@ struct ContentView: View {
                             .foregroundColor(.cyan.opacity(0.85))
                     }
                     Spacer()
-                    Button {
-                        model.openChat()
-                    } label: {
-                        Image(systemName: "bubble.left.and.bubble.right.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.cyan)
-                            .frame(width: 34, height: 34)
-                            .background(Color.white.opacity(0.12))
-                            .clipShape(Circle())
+                    HStack(spacing: 8) {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                model.openExplore()
+                            }
+                        } label: {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.cyan)
+                                .frame(width: 34, height: 34)
+                                .background(Color.white.opacity(0.12))
+                                .clipShape(Circle())
+                        }
+
+                        Button {
+                            model.openChat()
+                        } label: {
+                            Image(systemName: "bubble.left.and.bubble.right.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.cyan)
+                                .frame(width: 34, height: 34)
+                                .background(Color.white.opacity(0.12))
+                                .clipShape(Circle())
+                        }
                     }
                 }
                 .padding(.horizontal, 16)
@@ -333,6 +455,28 @@ struct ContentView: View {
                         .foregroundColor(.pink)
                 }
                 Spacer()
+
+                // Explore Button
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        model.openExplore()
+                    }
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.pink)
+                        .padding(6)
+                }
+
+                // Refresh Button
+                Button {
+                    model.reloadTinder()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.85))
+                        .padding(6)
+                }
 
                 // Quick Switch to REAL Instagram
                 Button {
@@ -441,17 +585,23 @@ struct ContentView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: model.heartBurst)
     }
 
-    // ── Instagram จริง (decoy) + ปุ่มลอยลากได้สำหรับกลับ ──
+    // ── Instagram จริง (decoy) + แคปซูลปุ่มลอยลากได้สำหรับรีเฟรชและย้อนกลับ ──
     private var realInstagram: some View {
         GeometryReader { geo in
             ZStack {
                 WebViewRepresentable(webView: model.igWebView)
                     .background(Color.black)
-                DraggableFloatingButton(bounds: geo.size) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        model.toggleRealInstagram()
+                DraggableFloatingControl(
+                    bounds: geo.size,
+                    onRefresh: {
+                        model.reloadInstagram()
+                    },
+                    onBack: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            model.toggleRealInstagram()
+                        }
                     }
-                }
+                )
             }
         }
     }
@@ -530,54 +680,87 @@ struct LiquidDropletBurstView: View {
     }
 }
 
-// ปุ่มลอยแบบ AssistiveTouch: ลากย้ายได้อิสระ ปล่อยแล้วดูดเข้าขอบซ้าย/ขวา
-struct DraggableFloatingButton: View {
+// แคปซูลปุ่มลอยแบบ AssistiveTouch: รีเฟรช + ย้อนกลับ ลากย้ายได้อิสระ ปล่อยแล้วดูดเข้าขอบซ้าย/ขวา
+struct DraggableFloatingControl: View {
     let bounds: CGSize
-    var action: () -> Void
+    var onRefresh: () -> Void
+    var onBack: () -> Void
 
     @AppStorage("floatBtnOnRight") private var onRight = true
     @AppStorage("floatBtnYRatio") private var yRatio = 0.12
 
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
+    @State private var spinAngle: Double = 0
 
-    private let diameter: CGFloat = 56
+    private let pillWidth: CGFloat = 96
+    private let pillHeight: CGFloat = 46
     private let edgeMargin: CGFloat = 12
 
     var body: some View {
-        let homeX = onRight ? bounds.width - edgeMargin - diameter / 2
-                            : edgeMargin + diameter / 2
+        let homeX = onRight ? bounds.width - edgeMargin - pillWidth / 2
+                            : edgeMargin + pillWidth / 2
         let homeY = clampY(yRatio) * bounds.height
 
-        Image(systemName: "arrow.uturn.backward")
-            .font(.system(size: 18, weight: .semibold))
-            .foregroundColor(.primary)
-            .frame(width: diameter, height: diameter)
-            .background(Circle().fill(.regularMaterial))
-            .overlay(Circle().stroke(Color.primary.opacity(0.12), lineWidth: 0.5))
-            .shadow(color: .black.opacity(isDragging ? 0.3 : 0.15), radius: isDragging ? 10 : 6, y: 2)
-            .scaleEffect(isDragging ? 1.1 : 1.0)
-            .opacity(isDragging ? 1.0 : 0.8)
-            .position(x: homeX + dragOffset.width, y: homeY + dragOffset.height)
-            .onTapGesture { action() }
-            .gesture(
-                DragGesture(minimumDistance: 10)
-                    .onChanged { v in
-                        isDragging = true
-                        dragOffset = v.translation
+        HStack(spacing: 0) {
+            // ปุ่ม Refresh หน้า Instagram
+            Button {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    spinAngle += 360
+                }
+                onRefresh()
+            } label: {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.primary)
+                    .rotationEffect(.degrees(spinAngle))
+                    .frame(width: pillWidth / 2, height: pillHeight)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            // เส้นคั่นบางๆ
+            Rectangle()
+                .fill(Color.primary.opacity(0.18))
+                .frame(width: 1, height: 20)
+
+            // ปุ่ม ย้อนกลับไป Tinder
+            Button {
+                onBack()
+            } label: {
+                Image(systemName: "arrow.uturn.backward")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .frame(width: pillWidth / 2, height: pillHeight)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(width: pillWidth, height: pillHeight)
+        .background(Capsule().fill(.regularMaterial))
+        .overlay(Capsule().stroke(Color.primary.opacity(0.15), lineWidth: 0.8))
+        .shadow(color: .black.opacity(isDragging ? 0.35 : 0.18), radius: isDragging ? 12 : 6, y: 2)
+        .scaleEffect(isDragging ? 1.08 : 1.0)
+        .opacity(isDragging ? 1.0 : 0.9)
+        .position(x: homeX + dragOffset.width, y: homeY + dragOffset.height)
+        .gesture(
+            DragGesture(minimumDistance: 10)
+                .onChanged { v in
+                    isDragging = true
+                    dragOffset = v.translation
+                }
+                .onEnded { v in
+                    let finalX = homeX + v.translation.width
+                    let finalY = homeY + v.translation.height
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                        onRight = finalX > bounds.width / 2
+                        yRatio = clampY(Double(finalY / bounds.height))
+                        dragOffset = .zero
                     }
-                    .onEnded { v in
-                        let finalX = homeX + v.translation.width
-                        let finalY = homeY + v.translation.height
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-                            onRight = finalX > bounds.width / 2
-                            yRatio = clampY(Double(finalY / bounds.height))
-                            dragOffset = .zero
-                        }
-                        isDragging = false
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    }
-            )
+                    isDragging = false
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                }
+        )
     }
 
     private func clampY(_ ratio: Double) -> Double {

@@ -15,6 +15,7 @@ struct RootView: View {
             if showPickleLive {
                 PickleLiveView(onExit: {
                     showPickleLive = false
+                    AppSettings.shared.isDecoyActive = false
                     isLocked = true      // กลับไปหน้าล็อก ต้องใส่ PIN หลักใหม่
                 })
                 .transition(.opacity)
@@ -27,10 +28,12 @@ struct RootView: View {
                     mode: .verify,
                     onUnlocked: {
                         showPickleLive = false
+                        AppSettings.shared.isDecoyActive = false
                         isLocked = false
                     },
                     onDecoyUnlocked: {
                         showPickleLive = true
+                        AppSettings.shared.isDecoyActive = true
                         isLocked = false
                     }
                 )

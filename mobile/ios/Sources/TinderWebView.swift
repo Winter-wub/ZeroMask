@@ -9,6 +9,7 @@ final class MaskModel: NSObject, ObservableObject {
     @Published var slideAway = false
     @Published var popupWebView: WKWebView?
     @Published var isInChat = false          // โหมดแชทเต็มจอ (Seamless Chat)
+    @Published var isExplore = false         // โหมดสำรวจเต็มจอ (Seamless Explore)
     @Published var dropletBurst = false      // เอฟเฟกต์หยดน้ำกระจายของ Liquid Glass
     @Published var badgeCount = 0            // เลขแจ้งเตือนจริงจาก Tinder
     @Published var showRealInstagram = false // โหมด decoy: โชว์ instagram.com จริง
@@ -28,20 +29,62 @@ final class MaskModel: NSObject, ObservableObject {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
         config.websiteDataStore = .default()
+
+        // ฉีดสคริปต์ตรวจจับ Instagram (Cookies, Unread DMs, DOM Badges)
+        let igScript = WKUserScript(source: MaskScripts.instagramScript,
+                                    injectionTime: .atDocumentEnd,
+                                    forMainFrameOnly: false)
+        config.userContentController.addUserScript(igScript)
+        config.userContentController.add(self, name: "maskIG")
+
         let wv = WKWebView(frame: .zero, configuration: config)
         wv.customUserAgent = safariUA
+        wv.navigationDelegate = self
         wv.allowsBackForwardNavigationGestures = true
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(handleIGRefresh(_:)), for: .valueChanged)
+        wv.scrollView.refreshControl = refreshControl
         // Instagram web ก็ใส่เลขไว้ใน title เช่น "(3) Instagram" → นับรวมด้วย
         igTitleObservation = wv.observe(\.title, options: [.new]) { [weak self] w, _ in
             let c = Self.countInTitle(w.title)
             DispatchQueue.main.async {
                 guard let self, self.igCount != c else { return }
                 self.igCount = c
-                self.recomputeBadge()
+                self.recomputeBadge(source: "Instagram")
             }
         }
         return wv
     }()
+
+    func syncInstagramCookies(completion: ((Bool) -> Void)? = nil) {
+        WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
+            var foundSession = false
+            for c in cookies where c.domain.contains("instagram.com") {
+                if c.name == "sessionid" && !c.value.isEmpty {
+                    KeychainTokenStore.save(c.value, for: .instagramSessionId)
+                    foundSession = true
+                    print("[IG Cookie] Found HttpOnly sessionid: \(c.value.prefix(8))...")
+                }
+                if c.name == "ds_user_id" && !c.value.isEmpty {
+                    KeychainTokenStore.save(c.value, for: .instagramUserId)
+                    print("[IG Cookie] Found ds_user_id: \(c.value)")
+                }
+                if c.name == "csrftoken" && !c.value.isEmpty {
+                    KeychainTokenStore.save(c.value, for: .instagramCsrfToken)
+                }
+            }
+            DispatchQueue.main.async {
+                completion?(foundSession)
+            }
+        }
+    }
+
+    @objc private func handleIGRefresh(_ sender: UIRefreshControl) {
+        reloadInstagram()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            sender.endRefreshing()
+        }
+    }
 
     // ดึงเลขในวงเล็บหน้า title เช่น "(4) Tinder" → 4
     private static func countInTitle(_ title: String?) -> Int {
@@ -51,12 +94,12 @@ final class MaskModel: NSObject, ObservableObject {
     }
 
     // รวมเลข 2 ฝั่ง → อัปเดต badge + ยิงแจ้งเตือน
-    private func recomputeBadge() {
+    private func recomputeBadge(source: String? = nil) {
         let total = tinderCount + igCount
         guard badgeCount != total else { return }
         badgeCount = total
         let active = UIApplication.shared.applicationState == .active
-        NotificationManager.shared.handleBadgeChange(to: total, appIsActive: active)
+        NotificationManager.shared.handleBadgeChange(to: total, appIsActive: active, source: source)
     }
 
     // UA ของ Safari บน iPhone จริง — ให้ Tinder เสิร์ฟเว็บปกติ + login Google ไม่โดนบล็อก
@@ -69,6 +112,13 @@ final class MaskModel: NSObject, ObservableObject {
         config.allowsInlineMediaPlayback = true
         config.websiteDataStore = .default() // จำ session/login ไว้
 
+        // 1. ดักจับ Network ที่ document start เพื่อดึง Auth Token ทันที
+        let interceptorScript = WKUserScript(source: MaskScripts.networkInterceptorScript,
+                                             injectionTime: .atDocumentStart,
+                                             forMainFrameOnly: false)
+        config.userContentController.addUserScript(interceptorScript)
+
+        // 2. ปรับแต่ง DOM / Gesture ที่ document end
         let script = WKUserScript(source: MaskScripts.userScript,
                                   injectionTime: .atDocumentEnd,
                                   forMainFrameOnly: true)
@@ -91,16 +141,27 @@ final class MaskModel: NSObject, ObservableObject {
             }
         }
 
-        // ตรวจสอบ URL เพื่อปรับเข้าสู่โหมดแชทเต็มจออัตโนมัติ (Seamless Chat)
+        // ตรวจสอบ URL เพื่อปรับเข้าสู่โหมดแชทเต็มจอ (Seamless Chat) หรือโหมดสำรวจ (Seamless Explore)
         urlObservation = webView.observe(\.url, options: [.new]) { [weak self] wv, _ in
             guard let self, let path = wv.url?.path else { return }
             DispatchQueue.main.async {
                 if path.contains("/matches") || path.contains("/messages") {
                     if !self.isInChat { self.isInChat = true }
+                    if self.isExplore { self.isExplore = false }
+                } else if path.contains("/explore") {
+                    if self.isInChat { self.isInChat = false }
+                    if !self.isExplore { self.isExplore = true }
                 } else if path.contains("/recs") {
                     if self.isInChat { self.isInChat = false }
+                    if self.isExplore { self.isExplore = false }
                 }
             }
+        }
+
+        // ซิงค์คุกกี้ Instagram ทันทีและเป็นระยะเพื่อดักจับ HttpOnly sessionid
+        syncInstagramCookies()
+        Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            self?.syncInstagramCookies()
         }
     }
 
@@ -109,7 +170,27 @@ final class MaskModel: NSObject, ObservableObject {
         if !showRealInstagram, igWebView.url == nil {
             igWebView.load(URLRequest(url: URL(string: "https://www.instagram.com/")!))
         }
+        syncInstagramCookies()
         showRealInstagram.toggle()
+    }
+
+    // ── รีเฟรชหน้าเว็บ ──
+    func reloadTinder() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        if webView.url != nil {
+            webView.reload()
+        } else {
+            webView.load(URLRequest(url: recsURL))
+        }
+    }
+
+    func reloadInstagram() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        if igWebView.url != nil {
+            igWebView.reload()
+        } else {
+            igWebView.load(URLRequest(url: URL(string: "https://www.instagram.com/")!))
+        }
     }
 
     // ── แอ็กชันหลัก (1 กดของผู้ใช้ = 1 คลิกปุ่มจริงของ Tinder) ──
@@ -137,13 +218,21 @@ final class MaskModel: NSObject, ObservableObject {
         webView.evaluateJavaScript(MaskScripts.clickGamepad("Super Like"))
     }
 
+    func openExplore() {
+        isInChat = false
+        isExplore = true
+        go("explore")
+    }
+
     func openChat() {
+        isExplore = false
         isInChat = true
         go("matches")
     }
 
     func backToFeed() {
         isInChat = false
+        isExplore = false
         go("recs")
     }
 
@@ -155,6 +244,7 @@ final class MaskModel: NSObject, ObservableObject {
 
     // ล้าง cookie/session ทั้งหมด แล้วโหลด Tinder ใหม่ (= ออกจากระบบ)
     func logout() {
+        KeychainTokenStore.clearAll()
         let store = webView.configuration.websiteDataStore
         let types = WKWebsiteDataStore.allWebsiteDataTypes()
         store.fetchDataRecords(ofTypes: types) { records in
@@ -172,21 +262,134 @@ final class MaskModel: NSObject, ObservableObject {
     }
 }
 
-// ── รับ event จาก JS ที่ฉีดเข้า Tinder ──
+// ── รับ event จาก JS ที่ฉีดเข้า Tinder และ Instagram ──
 extension MaskModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController,
                                didReceive message: WKScriptMessage) {
-        guard message.name == "mask",
-              let body = message.body as? [String: Any],
-              let type = body["type"] as? String else { return }
-        switch type {
-        case "double-tap":
-            if AppSettings.shared.doubleTapLike { like() }
-        case "scroll-next":
-            if AppSettings.shared.swipeToPass { pass() }
-        case "profile":
-            if let name = body["payload"] as? String, !name.isEmpty { username = name }
-        default: break
+        if message.name == "mask",
+           let body = message.body as? [String: Any],
+           let type = body["type"] as? String {
+            switch type {
+            case "double-tap":
+                if AppSettings.shared.doubleTapLike { like() }
+            case "scroll-next":
+                if AppSettings.shared.swipeToPass { pass() }
+            case "profile":
+                if let name = body["payload"] as? String, !name.isEmpty { username = name }
+            case "auth-token":
+                if let token = body["payload"] as? String, !token.isEmpty {
+                    print("[Auth] Captured live Tinder Auth Token: \(token.prefix(10))...")
+                    KeychainTokenStore.save(token, for: .tinderAuthToken)
+                }
+            case "api-endpoint":
+                if let endpoint = body["payload"] as? String, !endpoint.isEmpty {
+                    print("[Auth] Captured live Tinder API endpoint: \(endpoint)")
+                    KeychainTokenStore.save(endpoint, for: .tinderUpdatesEndpoint)
+                }
+            case "dom-badge":
+                if let count = body["payload"] as? Int {
+                    DispatchQueue.main.async {
+                        guard self.tinderCount != count else { return }
+                        self.tinderCount = count
+                        self.recomputeBadge(source: "Tinder")
+                    }
+                }
+            case "api-data":
+                if let payload = body["payload"] as? [String: Any],
+                   let url = payload["url"] as? String,
+                   let data = payload["data"] as? [String: Any] {
+                    self.handleTinderAPIData(url: url, data: data)
+                }
+            default: break
+            }
+        } else if message.name == "maskIG",
+                  let body = message.body as? [String: Any],
+                  let type = body["type"] as? String {
+            switch type {
+            case "ig-session":
+                if let payload = body["payload"] as? [String: Any] {
+                    if let sid = payload["sessionId"] as? String, !sid.isEmpty {
+                        KeychainTokenStore.save(sid, for: .instagramSessionId)
+                    }
+                    if let uid = payload["userId"] as? String, !uid.isEmpty {
+                        KeychainTokenStore.save(uid, for: .instagramUserId)
+                    }
+                    if let csrf = payload["csrfToken"] as? String, !csrf.isEmpty {
+                        KeychainTokenStore.save(csrf, for: .instagramCsrfToken)
+                    }
+                    print("[IG] Captured live Instagram session cookies")
+                }
+            case "ig-badge":
+                if let count = body["payload"] as? Int {
+                    DispatchQueue.main.async {
+                        guard self.igCount != count else { return }
+                        self.igCount = count
+                        self.recomputeBadge(source: "Instagram")
+                    }
+                }
+            case "ig-api-data":
+                if let payload = body["payload"] as? [String: Any],
+                   let url = payload["url"] as? String,
+                   let data = payload["data"] as? [String: Any] {
+                    self.handleInstagramAPIData(url: url, data: data)
+                }
+            default: break
+            }
+        }
+    }
+
+    private func handleTinderAPIData(url: String, data: [String: Any]) {
+        var count = 0
+        if url.contains("/fast-match") {
+            if let dataObj = data["data"] as? [String: Any],
+               let c = dataObj["count"] as? Int {
+                count += c
+            }
+        } else if url.contains("/updates") {
+            if let matches = data["matches"] as? [[String: Any]] {
+                count += matches.count
+            }
+        } else if url.contains("/meta") {
+            if let dataObj = data["data"] as? [String: Any] {
+                if let c = dataObj["unread_count"] as? Int { count += c }
+            }
+        }
+
+        if count > 0 {
+            DispatchQueue.main.async {
+                guard self.tinderCount != count else { return }
+                self.tinderCount = count
+                self.recomputeBadge(source: "Tinder")
+            }
+        }
+    }
+
+    private func handleInstagramAPIData(url: String, data: [String: Any]) {
+        var unseen = 0
+        if url.contains("/direct_v2/inbox/") {
+            if let inbox = data["inbox"] as? [String: Any],
+               let u = inbox["unseen_count"] as? Int {
+                unseen = u
+            }
+        } else if url.contains("/notifications/badge/") {
+            if let b = data["badge_count"] as? Int {
+                unseen = b
+            }
+        }
+
+        DispatchQueue.main.async {
+            guard self.igCount != unseen else { return }
+            self.igCount = unseen
+            self.recomputeBadge(source: "Instagram")
+        }
+    }
+}
+
+// ── ติดตามการโหลดหน้าเว็บของ Instagram เพื่อดึง Session Cookies ทันทีที่โหลดเสร็จ ──
+extension MaskModel: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        if webView === igWebView {
+            syncInstagramCookies()
         }
     }
 }

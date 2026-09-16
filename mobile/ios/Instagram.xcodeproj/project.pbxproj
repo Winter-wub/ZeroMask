@@ -13,6 +13,7 @@
 		3662DA8C394E8696D50D20EC /* PinStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C45C04CBCAE72165D6226A2F /* PinStore.swift */; };
 		375395C5CC067C7655C92230 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08206F897FFEB0253F3B9F57 /* NotificationManager.swift */; };
 		42664ACF7E540F5F673A4E63 /* BackgroundTaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D96FEE4E65757BC8002B3A76 /* BackgroundTaskManager.swift */; };
+		5071EB233446EBC7EB18501F /* KeychainTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17EAA8180DEA081C519F9F76 /* KeychainTokenStore.swift */; };
 		50CF89AFBE1E37D2259241AF /* InstagramApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C9A049351047D990C6BF6EA /* InstagramApp.swift */; };
 		9020D5ABBAF5B75B57188C1F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 618712866790768AA7ED4407 /* Assets.xcassets */; };
 		976F311C11DFAA2115854365 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4521363DFF2089E61B93BCD6 /* ContentView.swift */; };
@@ -25,6 +26,7 @@
 
 /* Begin PBXFileReference section */
 		08206F897FFEB0253F3B9F57 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		17EAA8180DEA081C519F9F76 /* KeychainTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainTokenStore.swift; sourceTree = "<group>"; };
 		4521363DFF2089E61B93BCD6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		4C9A049351047D990C6BF6EA /* InstagramApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstagramApp.swift; sourceTree = "<group>"; };
 		4D45DC5375F0C095BA42F55E /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -50,6 +52,7 @@
 				D96FEE4E65757BC8002B3A76 /* BackgroundTaskManager.swift */,
 				4521363DFF2089E61B93BCD6 /* ContentView.swift */,
 				4C9A049351047D990C6BF6EA /* InstagramApp.swift */,
+				17EAA8180DEA081C519F9F76 /* KeychainTokenStore.swift */,
 				9C64418B2DF9D6BE6356FA7E /* LockView.swift */,
 				62C28000893691BC261FB8ED /* MaskScripts.swift */,
 				08206F897FFEB0253F3B9F57 /* NotificationManager.swift */,
@@ -154,6 +157,7 @@
 				42664ACF7E540F5F673A4E63 /* BackgroundTaskManager.swift in Sources */,
 				976F311C11DFAA2115854365 /* ContentView.swift in Sources */,
 				50CF89AFBE1E37D2259241AF /* InstagramApp.swift in Sources */,
+				5071EB233446EBC7EB18501F /* KeychainTokenStore.swift in Sources */,
 				A676F999867369AEDA2E3196 /* LockView.swift in Sources */,
 				D03AEA5446D0CEC2E5DDD845 /* MaskScripts.swift in Sources */,
 				375395C5CC067C7655C92230 /* NotificationManager.swift in Sources */,

@@ -6,6 +6,7 @@ struct InstagramApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        _ = NotificationManager.shared
         BackgroundTaskManager.shared.registerBackgroundTasks()
     }
 

@@ -9,7 +9,7 @@ DD="build/DD"
 
 echo "▶︎ building + signing…"
 xcodebuild -project Instagram.xcodeproj -scheme Instagram \
-  -destination "platform=iOS,id=$DEVICE_ID" \
+  -destination "generic/platform=iOS" \
   -allowProvisioningUpdates \
   -derivedDataPath "$DD" \
   build

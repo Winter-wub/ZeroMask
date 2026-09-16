@@ -70,7 +70,7 @@ final class AppSettings: ObservableObject {
         willSet { objectWillChange.send() }
     }
     // เด้งแจ้งเตือนแม้กำลังใช้แอปอยู่
-    @AppStorage("notifyWhileUsing") var notifyWhileUsing = false {
+    @AppStorage("notifyWhileUsing") var notifyWhileUsing = true {
         willSet { objectWillChange.send() }
     }
 
@@ -83,6 +83,9 @@ final class AppSettings: ObservableObject {
     // PIN เปิดอยู่ไหม (ดูจาก Keychain ไม่ใช่ UserDefaults)
     var pinEnabled: Bool { PinStore.isSet }
     var decoyPinEnabled: Bool { PinStore.isSet(.decoy) }
+
+    /// สถานะว่ากำลังอยู่ในโหมดอำพราง (PickleWatch) หรือไม่
+    @Published var isDecoyActive = false
 
     private init() {}
 }
