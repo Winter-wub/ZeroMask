@@ -59,7 +59,7 @@ final class PickleLiveModel: ObservableObject {
 
     func loadIfNeeded() {
         guard webView.url == nil,
-              let url = URL(string: AppSettings.shared.pickleLiveURL) else { return }
+              let url = AppSettings.shared.pickleLiveResolvedURL else { return }
         webView.load(URLRequest(url: url))
     }
 }

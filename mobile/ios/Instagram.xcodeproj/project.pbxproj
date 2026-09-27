@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		01665518E1DB58172EE0623A /* PickleDashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89D5F167575C0840B57EBF79 /* PickleDashboard.swift */; };
 		1289C4D3F3C2C8C0494DAE45 /* TinderWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53A3FA4D6268B2677FF17D80 /* TinderWebView.swift */; };
 		2888CC2A6D85961E8B45F878 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CCB8105FB9B42B1F47419A9 /* AppSettings.swift */; };
 		3662DA8C394E8696D50D20EC /* PinStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C45C04CBCAE72165D6226A2F /* PinStore.swift */; };
@@ -36,7 +35,6 @@
 		62C28000893691BC261FB8ED /* MaskScripts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaskScripts.swift; sourceTree = "<group>"; };
 		7895C4B875BD1C3EE7DA7FC9 /* Instagram.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Instagram.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		85DD8E8B98B2C7CF1FBB0176 /* PickleLiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickleLiveView.swift; sourceTree = "<group>"; };
-		89D5F167575C0840B57EBF79 /* PickleDashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickleDashboard.swift; sourceTree = "<group>"; };
 		8EE88FAFA10A03E966ADF8DA /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9C64418B2DF9D6BE6356FA7E /* LockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockView.swift; sourceTree = "<group>"; };
 		C45C04CBCAE72165D6226A2F /* PinStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinStore.swift; sourceTree = "<group>"; };
@@ -56,7 +54,6 @@
 				9C64418B2DF9D6BE6356FA7E /* LockView.swift */,
 				62C28000893691BC261FB8ED /* MaskScripts.swift */,
 				08206F897FFEB0253F3B9F57 /* NotificationManager.swift */,
-				89D5F167575C0840B57EBF79 /* PickleDashboard.swift */,
 				85DD8E8B98B2C7CF1FBB0176 /* PickleLiveView.swift */,
 				C45C04CBCAE72165D6226A2F /* PinStore.swift */,
 				4D45DC5375F0C095BA42F55E /* RootView.swift */,
@@ -161,7 +158,6 @@
 				A676F999867369AEDA2E3196 /* LockView.swift in Sources */,
 				D03AEA5446D0CEC2E5DDD845 /* MaskScripts.swift in Sources */,
 				375395C5CC067C7655C92230 /* NotificationManager.swift in Sources */,
-				01665518E1DB58172EE0623A /* PickleDashboard.swift in Sources */,
 				983B1731261796D272F92BB8 /* PickleLiveView.swift in Sources */,
 				3662DA8C394E8696D50D20EC /* PinStore.swift in Sources */,
 				C304C9696228930F2BB9A5A6 /* RootView.swift in Sources */,

@@ -13,6 +13,7 @@ struct LockView: View {
     var onDecoyUnlocked: (() -> Void)?
 
     private let pinLength = 6
+    private let lockoutTicker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     @State private var entry = ""
     @State private var firstPin: String? = nil   // สำหรับ setup: PIN รอบแรกไว้ยืนยัน
@@ -58,7 +59,15 @@ struct LockView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground).ignoresSafeArea())
         .onAppear {
-            if mode == .verify { tryBiometric() }
+            // ถ้าตั้ง PIN สำรองไว้ ห้ามเด้ง Face ID เอง — ไม่งั้นแค่ยื่นเครื่องมาที่หน้าเราก็เข้าแอปจริงทันที
+            // ข้ามหน้า PIN สำรองไปเลย (ยังกดปุ่ม Face ID เองได้)
+            if mode == .verify {
+                if !PinStore.isSet(.decoy) { tryBiometric() }
+                refreshLockoutMessage()
+            }
+        }
+        .onReceive(lockoutTicker) { _ in
+            if mode == .verify { refreshLockoutMessage() }
         }
     }
 
@@ -122,6 +131,10 @@ struct LockView: View {
     // ── ตรรกะ ──
     private func press(_ digit: String) {
         guard entry.count < pinLength else { return }
+        if mode == .verify && PinStore.lockoutRemaining > 0 {
+            refreshLockoutMessage()
+            return
+        }
         wrongMsg = nil
         entry += digit
         if entry.count == pinLength { submit() }
@@ -131,11 +144,15 @@ struct LockView: View {
         switch mode {
         case .verify:
             if PinStore.verify(entry) {
+                PinStore.resetFailures()
                 onUnlocked()
             } else if let onDecoy = onDecoyUnlocked, PinStore.verify(entry, slot: .decoy) {
+                PinStore.resetFailures()
                 onDecoy()
             } else {
-                fail("PIN ไม่ถูกต้อง")
+                PinStore.recordFailure()
+                let wait = PinStore.lockoutRemaining
+                fail(wait > 0 ? Self.lockoutText(wait) : "PIN ไม่ถูกต้อง")
             }
         case .setup, .setupDecoy:
             let slot: PinStore.Slot = (mode == .setup) ? .main : .decoy
@@ -159,6 +176,22 @@ struct LockView: View {
                 entry = ""
             }
         }
+    }
+
+    // ข้อความนับถอยหลังตอนโดนล็อกจากการใส่ผิดหลายครั้ง
+    private func refreshLockoutMessage() {
+        let wait = PinStore.lockoutRemaining
+        if wait > 0 {
+            wrongMsg = Self.lockoutText(wait)
+        } else if let msg = wrongMsg, msg.hasPrefix("ใส่ผิดหลายครั้ง") {
+            wrongMsg = nil
+        }
+    }
+
+    private static func lockoutText(_ seconds: TimeInterval) -> String {
+        let s = Int(seconds.rounded(.up))
+        let time = s >= 60 ? "\(s / 60):\(String(format: "%02d", s % 60)) นาที" : "\(s) วินาที"
+        return "ใส่ผิดหลายครั้ง ลองใหม่ใน \(time)"
     }
 
     private func fail(_ msg: String) {
@@ -189,7 +222,12 @@ struct LockView: View {
         ctx.localizedFallbackTitle = "ใช้ PIN"
         ctx.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics,
                            localizedReason: "ปลดล็อกเพื่อเข้าใช้งาน") { ok, _ in
-            if ok { DispatchQueue.main.async { onUnlocked() } }
+            if ok {
+                DispatchQueue.main.async {
+                    PinStore.resetFailures()
+                    onUnlocked()
+                }
+            }
         }
     }
 }

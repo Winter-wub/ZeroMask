@@ -27,7 +27,9 @@ enum KeychainTokenStore {
 
         var newAttributes = query
         newAttributes[kSecValueData as String] = data
-        newAttributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        // AfterFirstUnlock: background fetch ต้องอ่านได้ตอนจอล็อก
+        // ThisDeviceOnly: ไม่ติดไปกับ backup/ย้ายเครื่อง (token เซสชันไม่ควรออกจากเครื่องนี้)
+        newAttributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
 
         SecItemAdd(newAttributes as CFDictionary, nil)
     }

@@ -57,9 +57,11 @@ final class MaskModel: NSObject, ObservableObject {
         wv.navigationDelegate = self
         wv.uiDelegate = self
         wv.allowsBackForwardNavigationGestures = true
+        #if DEBUG
         if #available(iOS 16.4, *) {
             wv.isInspectable = true
         }
+        #endif
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(handleIGRefresh(_:)), for: .valueChanged)
         wv.scrollView.refreshControl = refreshControl
@@ -73,11 +75,11 @@ final class MaskModel: NSObject, ObservableObject {
                 if c.name == "sessionid" && !c.value.isEmpty {
                     KeychainTokenStore.save(c.value, for: .instagramSessionId)
                     foundSession = true
-                    print("[IG Cookie] Found HttpOnly sessionid: \(c.value.prefix(8))...")
+                    dlog("[IG Cookie] Found HttpOnly sessionid")
                 }
                 if c.name == "ds_user_id" && !c.value.isEmpty {
                     KeychainTokenStore.save(c.value, for: .instagramUserId)
-                    print("[IG Cookie] Found ds_user_id: \(c.value)")
+                    dlog("[IG Cookie] Found ds_user_id")
                 }
                 if c.name == "csrftoken" && !c.value.isEmpty {
                     KeychainTokenStore.save(c.value, for: .instagramCsrfToken)
@@ -156,9 +158,11 @@ final class MaskModel: NSObject, ObservableObject {
         webView.uiDelegate = self
         webView.navigationDelegate = self
         webView.allowsBackForwardNavigationGestures = true
+        #if DEBUG
         if #available(iOS 16.4, *) {
             webView.isInspectable = true
         }
+        #endif
         webView.load(URLRequest(url: recsURL))
 
         // ตรวจสอบ URL เพื่อปรับเข้าสู่โหมดแชทเต็มจอ (Seamless Chat) หรือโหมดสำรวจ (Seamless Explore)
@@ -311,6 +315,16 @@ final class MaskModel: NSObject, ObservableObject {
 extension MaskModel: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController,
                                didReceive message: WKScriptMessage) {
+        // สคริปต์ถูกฉีดเข้าทุก frame (ต้องดัก fetch ให้ครบ) → รับคำสั่งเฉพาะจาก main frame ของโดเมนจริง
+        // กัน iframe โฆษณา/analytics ยิง auth-token ปลอมหรือสั่ง Like แทนเรา
+        let expectedDomain = (message.name == "maskIG") ? "instagram.com" : "tinder.com"
+        let host = message.frameInfo.securityOrigin.host
+        guard message.frameInfo.isMainFrame,
+              host == expectedDomain || host.hasSuffix("." + expectedDomain) else {
+            dlog("[Bridge] Rejected \(message.name) message from frame host=\(host)")
+            return
+        }
+
         if message.name == "mask",
            let body = message.body as? [String: Any],
            let type = body["type"] as? String {
@@ -323,12 +337,12 @@ extension MaskModel: WKScriptMessageHandler {
                 if let name = body["payload"] as? String, !name.isEmpty { username = name }
             case "auth-token":
                 if let token = body["payload"] as? String, !token.isEmpty {
-                    print("[Auth] Captured live Tinder Auth Token: \(token.prefix(10))...")
+                    dlog("[Auth] Captured live Tinder Auth Token")
                     KeychainTokenStore.save(token, for: .tinderAuthToken)
                 }
             case "api-endpoint":
                 if let endpoint = body["payload"] as? String, !endpoint.isEmpty {
-                    print("[Auth] Captured live Tinder API endpoint: \(endpoint)")
+                    dlog("[Auth] Captured live Tinder API endpoint: \(endpoint)")
                     KeychainTokenStore.save(endpoint, for: .tinderUpdatesEndpoint)
                 }
             case "dom-badge":
@@ -363,7 +377,7 @@ extension MaskModel: WKScriptMessageHandler {
                     if let csrf = payload["csrfToken"] as? String, !csrf.isEmpty {
                         KeychainTokenStore.save(csrf, for: .instagramCsrfToken)
                     }
-                    print("[IG] Captured live Instagram session cookies")
+                    dlog("[IG] Captured live Instagram session cookies")
                 }
             case "ig-badge":
                 if let count = body["payload"] as? Int {
@@ -471,7 +485,7 @@ extension MaskModel: WKNavigationDelegate {
                 self.isTinderLoading = false
             }
         }
-        print("[WebView Error] didFail: \(error.localizedDescription)")
+        dlog("[WebView Error] didFail: \(error.localizedDescription)")
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
@@ -482,7 +496,7 @@ extension MaskModel: WKNavigationDelegate {
                 self.isTinderLoading = false
             }
         }
-        print("[WebView Error] didFailProvisional: \(error.localizedDescription)")
+        dlog("[WebView Error] didFailProvisional: \(error.localizedDescription)")
     }
 }
 

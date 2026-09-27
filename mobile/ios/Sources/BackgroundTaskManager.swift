@@ -45,9 +45,9 @@ final class BackgroundTaskManager: ObservableObject {
 
         do {
             try BGTaskScheduler.shared.submit(request)
-            print("[BGTask] Successfully scheduled background task: \(fetchTaskID)")
+            dlog("[BGTask] Successfully scheduled background task: \(fetchTaskID)")
         } catch {
-            print("[BGTask] Could not schedule app refresh: \(error)")
+            dlog("[BGTask] Could not schedule app refresh: \(error)")
         }
     }
 
@@ -325,7 +325,7 @@ final class BackgroundTaskManager: ObservableObject {
                       let inbox = json["inbox"] as? [String: Any],
                       let unreadDMs = inbox["unseen_count"] as? Int else {
                     let detailMsg = "ได้ 200 แต่ไม่ใช่ข้อมูล inbox (น่าจะโดนเด้งไปหน้า login/checkpoint) กรุณากดปุ่ม 📸 เข้าสู่ระบบใหม่"
-                    print("[IG] ❌ \(detailMsg)")
+                    dlog("[IG] ❌ \(detailMsg)")
                     DispatchQueue.main.async {
                         self.lastIGStatus = detailMsg
                         self.lastIGCheck = Date()
@@ -337,14 +337,14 @@ final class BackgroundTaskManager: ObservableObject {
                 DispatchQueue.main.async {
                     NotificationManager.shared.updateCounts(instagram: unreadDMs)
                     let detailMsg = "สำเร็จ (200 OK) - ข้อความ Direct ที่ยังไม่ได้อ่าน: \(unreadDMs) ข้อความ"
-                    print("[IG] ✅ \(detailMsg)")
+                    dlog("[IG] ✅ \(detailMsg)")
                     self.lastIGStatus = detailMsg
                     self.lastIGCheck = Date()
                     completion(FetchResult(success: true, httpStatus: 200, likesCount: 0, messagesCount: unreadDMs, detail: detailMsg))
                 }
             } else if httpResponse.statusCode == 401 || httpResponse.statusCode == 302 {
                 let detailMsg = "เซสชันหมดอายุ (\(httpResponse.statusCode)) กรุณากดปุ่ม 📸 เข้าสู่ระบบใหม่อีกครั้ง"
-                print("[IG] ❌ \(detailMsg)")
+                dlog("[IG] ❌ \(detailMsg)")
                 DispatchQueue.main.async {
                     self.lastIGStatus = detailMsg
                     self.lastIGCheck = Date()

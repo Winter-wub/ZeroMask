@@ -31,10 +31,6 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         completionHandler([.banner, .sound, .badge, .list])
     }
 
-    private var lastCount: Int {
-        get { UserDefaults.standard.integer(forKey: "NotificationManager.lastCount") }
-        set { UserDefaults.standard.set(newValue, forKey: "NotificationManager.lastCount") }
-    }
     private var lastTinderCount: Int {
         get { UserDefaults.standard.integer(forKey: "NotificationManager.lastTinderCount") }
         set { UserDefaults.standard.set(newValue, forKey: "NotificationManager.lastTinderCount") }
@@ -139,33 +135,10 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    /// เรียกทุกครั้งที่เลขแจ้งเตือนจาก Tinder หรือ Instagram เปลี่ยน
-    func handleBadgeChange(to count: Int, appIsActive: Bool, source: String? = nil) {
-        let settings = AppSettings.shared
-        defer { lastCount = count }
-
-        // badge บนไอคอนแอป (หน้าโฮม)
-        if settings.notificationsEnabled && settings.showIconBadge {
-            setIconBadge(count)
-        } else {
-            setIconBadge(0)
-        }
-
-        guard settings.notificationsEnabled, authorized else { return }
-        // ถ้าอยู่ใน Decoy Mode (PickleWatch) ห้ามเด้งแจ้งเตือนเด็ดขาดเพื่อความปลอดภัย
-        guard !settings.isDecoyActive else { return }
-        // แจ้งเฉพาะตอน "เพิ่มขึ้น" เท่านั้น (อ่านแล้วเลขลด ไม่ต้องเด้ง)
-        guard count > lastCount, count > 0 else { return }
-        // ถ้ากำลังดูแอปอยู่ ไม่ต้องเด้งซ้ำ (เห็น badge ในแอปอยู่แล้ว)
-        if appIsActive && !settings.notifyWhileUsing { return }
-
-        let isDM = (source == "Instagram")
-        postDisguisedNotification(isDirectMessage: isDM)
-    }
-
     /// อัปเดตจำนวนแชทที่ยังไม่ได้ตอบจาก Tinder / Instagram แล้วคำนวณ Badge รวมทันที
     func updateCounts(tinder: Int? = nil, instagram: Int? = nil, appIsActive: Bool = false) {
         let prevTotal = currentTotalCount
+        let prevIG = lastIGCount
         if let t = tinder { lastTinderCount = max(0, t) }
         if let ig = instagram { lastIGCount = max(0, ig) }
         let newTotal = currentTotalCount
@@ -184,12 +157,12 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         guard newTotal > prevTotal, newTotal > 0 else { return }
         if appIsActive && !settings.notifyWhileUsing { return }
 
-        let isFromIG = (instagram != nil && (instagram ?? 0) > 0)
+        // ดูว่าฝั่ง IG เพิ่มขึ้นจริงไหม (ไม่ใช่แค่ส่งค่า IG มาด้วย)
+        let isFromIG = lastIGCount > prevIG
         postDisguisedNotification(isDirectMessage: isFromIG)
     }
 
     func resetLastCount() {
-        lastCount = 0
         lastTinderCount = 0
         lastIGCount = 0
         setIconBadge(0)
@@ -204,7 +177,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         force: Bool = false,
         completion: ((Bool, String) -> Void)? = nil
     ) {
-        print("[Notification] Attempting to post disguised notification (force=\(force), isDM=\(isDirectMessage))")
+        dlog("[Notification] Attempting to post disguised notification (force=\(force), isDM=\(isDirectMessage))")
         
         UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
             guard let self else { return }
@@ -213,7 +186,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
             guard isAuth else {
                 let msg = "ระบบยังไม่ได้รับสิทธิ์แจ้งเตือน (Status: \(settings.authorizationStatus.rawValue))"
-                print("[Notification] ❌ \(msg)")
+                dlog("[Notification] ❌ \(msg)")
                 DispatchQueue.main.async { completion?(false, msg) }
                 return
             }
@@ -221,13 +194,13 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             if !force {
                 guard AppSettings.shared.notificationsEnabled else {
                     let msg = "การแจ้งเตือนถูกปิดไว้ในแอป (notificationsEnabled=false)"
-                    print("[Notification] ⚠️ \(msg)")
+                    dlog("[Notification] ⚠️ \(msg)")
                     DispatchQueue.main.async { completion?(false, msg) }
                     return
                 }
                 guard !AppSettings.shared.isDecoyActive else {
                     let msg = "อยู่ในโหมดอำพราง (Decoy) - ไม่ยิง notification"
-                    print("[Notification] ⚠️ \(msg)")
+                    dlog("[Notification] ⚠️ \(msg)")
                     DispatchQueue.main.async { completion?(false, msg) }
                     return
                 }
@@ -268,27 +241,15 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             UNUserNotificationCenter.current().add(req) { error in
                 if let error = error {
                     let errStr = "เกิดข้อผิดพลาด: \(error.localizedDescription)"
-                    print("[Notification] \(errStr)")
+                    dlog("[Notification] \(errStr)")
                     DispatchQueue.main.async { completion?(false, errStr) }
                 } else {
                     let successMsg = "\(notifTitle): \(notifBody)"
-                    print("[Notification] Successfully posted disguised notification: \(successMsg)")
+                    dlog("[Notification] Successfully posted disguised notification: \(successMsg)")
                     DispatchQueue.main.async { completion?(true, successMsg) }
                 }
             }
         }
-    }
-
-    private func post(title: String, body: String) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        if AppSettings.shared.notificationSound { content.sound = .default }
-
-        let req = UNNotificationRequest(identifier: UUID().uuidString,
-                                        content: content,
-                                        trigger: nil) // เด้งทันที
-        UNUserNotificationCenter.current().add(req)
     }
 
     func setIconBadge(_ count: Int) {

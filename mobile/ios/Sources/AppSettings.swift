@@ -1,5 +1,13 @@
 import SwiftUI
 
+// log เฉพาะตอน debug — build จริงไม่ทิ้งร่องรอย (token/สถานะแชท) ไว้ใน console ของเครื่อง
+@inline(__always)
+func dlog(_ message: @autoclosure () -> String) {
+    #if DEBUG
+    print(message())
+    #endif
+}
+
 enum ThemeMode: String, CaseIterable, Identifiable {
     case system, light, dark
     var id: String { rawValue }
@@ -97,6 +105,18 @@ final class AppSettings: ObservableObject {
     @AppStorage("pickleLiveURL") var pickleLiveURL =
         "" {
         willSet { objectWillChange.send() }
+    }
+
+    /// ลิงก์ PickleWatch ที่โหลดได้จริง — เติม https:// ให้ถ้าพิมพ์มาแค่โดเมน
+    /// nil = ว่าง/ไม่ใช่ลิงก์เว็บ (โหมด PIN สำรองจะได้จอขาว ต้องเตือนใน Settings)
+    var pickleLiveResolvedURL: URL? {
+        let raw = pickleLiveURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else { return nil }
+        let withScheme = raw.contains("://") ? raw : "https://" + raw
+        guard let url = URL(string: withScheme),
+              url.scheme == "https" || url.scheme == "http",
+              url.host?.isEmpty == false else { return nil }
+        return url
     }
 
     // PIN เปิดอยู่ไหม (ดูจาก Keychain ไม่ใช่ UserDefaults)

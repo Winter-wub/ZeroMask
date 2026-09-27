@@ -62,6 +62,7 @@ struct RootView: View {
             if phase == .background, PinStore.isSet {
                 isLocked = true       // กลับมาเปิดใหม่ต้องใส่ PIN อีกครั้ง
                 showPickleLive = false // ออกจากโหมด PIN สำรองด้วย
+                AppSettings.shared.isDecoyActive = false // ไม่งั้นแจ้งเตือนเงียบค้างจนกว่าจะใส่ PIN หลัก
             }
             if phase == .active {
                 isAppResigning = false

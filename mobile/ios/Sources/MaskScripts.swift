@@ -1,7 +1,7 @@
 import Foundation
 
-// JS/CSS ที่ฉีดเข้า tinder.com — พอร์ตมาจาก src/preload.js + src/shell.js ของเวอร์ชัน desktop
-// (selector ชุดเดียวกับที่ตรวจกับ DOM จริงแล้ว: nav แบรนด์ Tinder, gamepad, itemprop)
+// JS/CSS ที่ฉีดเข้า tinder.com / instagram.com
+// (selector ตรวจกับ DOM จริงแล้ว: nav แบรนด์ Tinder, gamepad, itemprop — ถ้าเว็บอัปเดตต้องปรับที่นี่)
 enum MaskScripts {
 
     /// สคริปต์หลัก ฉีดตอน document end (main frame เท่านั้น)

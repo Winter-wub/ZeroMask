@@ -203,6 +203,11 @@ struct SettingsView: View {
                             .autocorrectionDisabled()
                             .keyboardType(.URL)
                             .font(.system(size: 13))
+                        if settings.pickleLiveResolvedURL == nil {
+                            Label("ยังไม่มีลิงก์ที่ใช้ได้ — ใส่ PIN สำรองแล้วจะเห็นจอขาว", systemImage: "exclamationmark.triangle.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(.orange)
+                        }
                     }
                 } header: {
                     Text("PIN สำรอง")
