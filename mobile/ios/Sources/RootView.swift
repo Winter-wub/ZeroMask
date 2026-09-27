@@ -204,6 +204,13 @@ struct BrandMark: View {
                 Text("tinder")
                     .font(.system(size: size, weight: .bold, design: .rounded))
                     .foregroundColor(.pink)
+            case .chatGPT:
+                Image(systemName: "sparkle")
+                    .font(.system(size: size * 0.75, weight: .bold))
+                    .foregroundColor(Color(red: 0.06, green: 0.65, blue: 0.50))
+                Text("ChatGPT")
+                    .font(.system(size: size, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
             }
         }
     }

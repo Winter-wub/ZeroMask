@@ -25,6 +25,9 @@ struct ContentView: View {
                 case .rawTinder:
                     rawTinderView
                         .transition(.opacity)
+                case .chatGPT:
+                    chatGPTDisguiseView
+                        .transition(.opacity)
                 }
             }
 
@@ -39,6 +42,9 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.2), value: model.isExplore)
         .animation(.easeInOut(duration: 0.2), value: settings.disguiseMode)
         .animation(.easeInOut(duration: 0.15), value: model.showRealInstagram)
+        .onChange(of: settings.disguiseMode) { _, _ in
+            model.updateIGTheme()
+        }
         .background(currentBackground)
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .sheet(isPresented: $showSettings) {
@@ -293,6 +299,7 @@ struct ContentView: View {
                         )
                         .clipShape(Capsule())
                         .shadow(color: Color.pink.opacity(0.4), radius: 5, x: 0, y: 1)
+                        .igBadge(model.igUnread)
                     }
 
                     // Switch Mode Menu
@@ -502,6 +509,7 @@ struct ContentView: View {
                         )
                     )
                     .clipShape(Capsule())
+                    .igBadge(model.igUnread)
                 }
 
                 Text("RAW VIEW")
@@ -565,12 +573,26 @@ struct ContentView: View {
         }
     }
 
-    // ── ตัวรูป (webview Tinder) + หัวใจเด้ง ──
+    // ── ตัวรูป (webview Tinder) + หัวใจเด้ง + Loading State ──
     private var media: some View {
         ZStack {
             WebViewRepresentable(webView: model.webView)
                 .offset(y: model.slideAway ? -40 : 0)
                 .opacity(model.slideAway ? 0 : 1)
+
+            if model.isTinderLoading {
+                VStack(spacing: 10) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .cyan))
+                        .scaleEffect(1.2)
+                    Text("กำลังโหลดฟีด...")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.cyan.opacity(0.85))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(red: 0.05, green: 0.07, blue: 0.10).opacity(0.85))
+            }
+
             if model.heartBurst {
                 Image(systemName: "heart.fill")
                     .font(.system(size: 96))
@@ -580,9 +602,99 @@ struct ContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black)
+        .background(Color(red: 0.04, green: 0.06, blue: 0.09))
         .clipped()
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: model.heartBurst)
+    }
+
+    // ── โหมดพรางตัว ChatGPT 4o: ครอบหน้าต่าง Instagram Direct เป็นธีม ChatGPT Dark ──
+    private var chatGPTDisguiseView: some View {
+        VStack(spacing: 0) {
+            // ChatGPT Header
+            HStack(spacing: 12) {
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(Color(red: 0.85, green: 0.85, blue: 0.85))
+                        .frame(width: 38, height: 38)
+                }
+
+                Spacer()
+
+                // ChatGPT Model Selector Pill -> แตะเพื่อเปิดเมนูสลับโหมด / กลับหน้าฟีดได้ทันที
+                Menu {
+                    ForEach(DisguiseMode.allCases) { mode in
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                settings.disguiseMode = mode
+                            }
+                        } label: {
+                            if settings.disguiseMode == mode {
+                                Label(mode.label, systemImage: "checkmark")
+                            } else {
+                                Text(mode.label)
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 5) {
+                        Text("ChatGPT 4o")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(Color(red: 0.65, green: 0.65, blue: 0.65))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color(red: 0.18, green: 0.18, blue: 0.18))
+                    .clipShape(Capsule())
+                }
+
+                Spacer()
+
+                // New Chat / Refresh Direct
+                Button {
+                    model.reloadInstagram()
+                } label: {
+                    Image(systemName: "square.and.pencil")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(Color(red: 0.85, green: 0.85, blue: 0.85))
+                        .frame(width: 38, height: 38)
+                }
+            }
+            .padding(.horizontal, 10)
+            .frame(height: 48)
+            .background(Color(red: 0.13, green: 0.13, blue: 0.13))
+
+            Divider().overlay(Color.white.opacity(0.08))
+
+            // Webview Instagram Direct ที่ถูกฉีด CSS ให้เป็น ChatGPT Theme พร้อม Loading Indicator
+            ZStack {
+                WebViewRepresentable(webView: model.igWebView)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(red: 0.13, green: 0.13, blue: 0.13))
+
+                if model.isIGLoading {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.15)
+                        Text("กำลังเชื่อมต่อ ChatGPT Direct...")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.75))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(red: 0.13, green: 0.13, blue: 0.13).opacity(0.85))
+                }
+            }
+        }
+        .background(Color(red: 0.13, green: 0.13, blue: 0.13))
+        .onAppear {
+            model.openInstagramDirect()
+        }
     }
 
     // ── Instagram จริง (decoy) + แคปซูลปุ่มลอยลากได้สำหรับรีเฟรชและย้อนกลับ ──
@@ -591,8 +703,16 @@ struct ContentView: View {
             ZStack {
                 WebViewRepresentable(webView: model.igWebView)
                     .background(Color.black)
+
+                if model.isIGLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.2)
+                }
+
                 DraggableFloatingControl(
                     bounds: geo.size,
+                    backBadge: model.tinderUnread,
                     onRefresh: {
                         model.reloadInstagram()
                     },
@@ -683,6 +803,7 @@ struct LiquidDropletBurstView: View {
 // แคปซูลปุ่มลอยแบบ AssistiveTouch: รีเฟรช + ย้อนกลับ ลากย้ายได้อิสระ ปล่อยแล้วดูดเข้าขอบซ้าย/ขวา
 struct DraggableFloatingControl: View {
     let bounds: CGSize
+    var backBadge: Int = 0   // แชท Tinder ยังไม่อ่าน โชว์บนปุ่มย้อนกลับ
     var onRefresh: () -> Void
     var onBack: () -> Void
 
@@ -731,6 +852,7 @@ struct DraggableFloatingControl: View {
                 Image(systemName: "arrow.uturn.backward")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.primary)
+                    .igBadge(backBadge)
                     .frame(width: pillWidth / 2, height: pillHeight)
                     .contentShape(Rectangle())
             }

@@ -40,8 +40,8 @@ final class BackgroundTaskManager: ObservableObject {
 
     func scheduleAppRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: fetchTaskID)
-        // นัดหมายอย่างเร็วที่สุด 15 นาทีตามเงื่อนไขของ iOS
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
+        // iOS minimum is ~15 min but request earliest possible
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 5 * 60)
 
         do {
             try BGTaskScheduler.shared.submit(request)
@@ -62,6 +62,18 @@ final class BackgroundTaskManager: ObservableObject {
             return
         }
 
+        // จบงานได้ครั้งเดียว — ถ้า iOS ตัดเวลาก่อน (expiration) ต้องเรียก setTaskCompleted
+        // ไม่งั้นแอปโดน kill และ iOS จะให้โควต้า background refresh น้อยลง
+        var finished = false
+        let finish: (Bool) -> Void = { success in
+            DispatchQueue.main.async {
+                guard !finished else { return }
+                finished = true
+                task.setTaskCompleted(success: success)
+            }
+        }
+        task.expirationHandler = { finish(false) }
+
         let group = DispatchGroup()
 
         // ตรวจสอบ Tinder ถ้ามี Token
@@ -81,7 +93,7 @@ final class BackgroundTaskManager: ObservableObject {
         }
 
         group.notify(queue: .main) {
-            task.setTaskCompleted(success: true)
+            finish(true)
         }
     }
 
@@ -152,7 +164,7 @@ final class BackgroundTaskManager: ObservableObject {
         req1.setValue("application/json", forHTTPHeaderField: "Accept")
         req1.setValue(safariUA, forHTTPHeaderField: "User-Agent")
         req1.setValue("web", forHTTPHeaderField: "platform")
-        req1.timeoutInterval = 15
+        req1.timeoutInterval = 10
 
         URLSession.shared.dataTask(with: req1) { data1, resp1, _ in
             let httpCode = (resp1 as? HTTPURLResponse)?.statusCode
@@ -195,33 +207,42 @@ final class BackgroundTaskManager: ObservableObject {
             req2.setValue(self.safariUA, forHTTPHeaderField: "User-Agent")
             req2.setValue("web", forHTTPHeaderField: "platform")
             req2.httpBody = try? JSONSerialization.data(withJSONObject: ["nudge": true])
-            req2.timeoutInterval = 15
+            req2.timeoutInterval = 10
 
             URLSession.shared.dataTask(with: req2) { data2, resp2, _ in
                 let updatesCode = (resp2 as? HTTPURLResponse)?.statusCode ?? httpCode
-                var msgCount = 0
+                var unreadChats = 0
 
                 if updatesCode == 200, let data = data2 {
                     if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                         if let matches = json["matches"] as? [[String: Any]] {
-                            msgCount += matches.count
+                            for m in matches {
+                                let hasUnseen = (m["has_unseen_message"] as? Bool) ?? false
+                                let isNew = (m["is_new_message"] as? Bool) ?? false
+                                if hasUnseen || isNew {
+                                    unreadChats += 1
+                                } else if let messages = m["messages"] as? [[String: Any]], !messages.isEmpty {
+                                    if let lastMsg = messages.last {
+                                        let lastMsgId = lastMsg["_id"] as? String
+                                        if let seen = m["seen"] as? [String: Any] {
+                                            let lastSeenId = seen["last_seen_msg_id"] as? String
+                                            if lastMsgId != nil && lastMsgId != lastSeenId {
+                                                unreadChats += 1
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
-                let total = likesCount + msgCount
-                let savedCount = UserDefaults.standard.integer(forKey: "NotificationManager.lastCount")
-
                 DispatchQueue.main.async {
-                    if total > savedCount && total > 0 {
-                        UserDefaults.standard.set(total, forKey: "NotificationManager.lastCount")
-                        NotificationManager.shared.postDisguisedNotification()
-                        NotificationManager.shared.setIconBadge(total)
-                    }
-                    let detailMsg = "สำเร็จ (\(updatesCode ?? 200) OK) - พบคนกด Like: \(likesCount) คน, แมตช์/แชทใหม่: \(msgCount) รายการ"
+                    NotificationManager.shared.updateCounts(tinder: unreadChats)
+                    let detailMsg = "สำเร็จ (\(updatesCode ?? 200) OK) - แชทที่ยังไม่ได้อ่าน: \(unreadChats) รายการ (คนกด Like: \(likesCount))"
                     self.lastTinderStatus = detailMsg
                     self.lastTinderCheck = Date()
-                    completion(FetchResult(success: true, httpStatus: updatesCode, likesCount: likesCount, messagesCount: msgCount, detail: detailMsg))
+                    completion(FetchResult(success: true, httpStatus: updatesCode, likesCount: likesCount, messagesCount: unreadChats, detail: detailMsg))
                 }
             }.resume()
         }.resume()
@@ -230,27 +251,25 @@ final class BackgroundTaskManager: ObservableObject {
     // MARK: - Instagram Live Fetch
 
     func fetchInstagram(completion: @escaping (FetchResult) -> Void) {
-        if KeychainTokenStore.load(for: .instagramSessionId) == nil {
-            DispatchQueue.main.async {
-                WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
-                    for c in cookies where c.domain.contains("instagram.com") {
-                        if c.name == "sessionid" && !c.value.isEmpty {
-                            KeychainTokenStore.save(c.value, for: .instagramSessionId)
-                        } else if c.name == "ds_user_id" && !c.value.isEmpty {
-                            KeychainTokenStore.save(c.value, for: .instagramUserId)
-                        } else if c.name == "csrftoken" && !c.value.isEmpty {
-                            KeychainTokenStore.save(c.value, for: .instagramCsrfToken)
-                        }
+        // อ่าน cookie สดจาก WKHTTPCookieStore ทุกครั้ง (sessionid เป็น HttpOnly และอาจถูกหมุนใหม่)
+        DispatchQueue.main.async {
+            WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
+                let igCookies = cookies.filter { $0.domain.contains("instagram.com") && !$0.value.isEmpty }
+                for c in igCookies {
+                    if c.name == "sessionid" {
+                        KeychainTokenStore.save(c.value, for: .instagramSessionId)
+                    } else if c.name == "ds_user_id" {
+                        KeychainTokenStore.save(c.value, for: .instagramUserId)
+                    } else if c.name == "csrftoken" {
+                        KeychainTokenStore.save(c.value, for: .instagramCsrfToken)
                     }
-                    self.performFetchInstagram(completion: completion)
                 }
+                self.performFetchInstagram(cookies: igCookies, completion: completion)
             }
-        } else {
-            performFetchInstagram(completion: completion)
         }
     }
 
-    private func performFetchInstagram(completion: @escaping (FetchResult) -> Void) {
+    private func performFetchInstagram(cookies: [HTTPCookie], completion: @escaping (FetchResult) -> Void) {
         guard let sessionId = KeychainTokenStore.load(for: .instagramSessionId), !sessionId.isEmpty else {
             let res = FetchResult(success: false, httpStatus: nil, likesCount: 0, messagesCount: 0,
                                   detail: "ไม่พบเซสชัน Instagram (กรุณากดปุ่ม 📸 เข้าสู่ระบบ Instagram ก่อน)")
@@ -263,6 +282,7 @@ final class BackgroundTaskManager: ObservableObject {
         }
 
         let userId = KeychainTokenStore.load(for: .instagramUserId) ?? ""
+        let csrf = KeychainTokenStore.load(for: .instagramCsrfToken) ?? ""
 
         guard let url = URL(string: "https://www.instagram.com/api/v1/direct_v2/inbox/?persistentBadging=true") else {
             completion(FetchResult(success: false, httpStatus: nil, likesCount: 0, messagesCount: 0, detail: "URL ไม่ถูกต้อง"))
@@ -271,13 +291,22 @@ final class BackgroundTaskManager: ObservableObject {
 
         var req = URLRequest(url: url)
         req.httpMethod = "GET"
-        var cookieHeader = "sessionid=\(sessionId)"
-        if !userId.isEmpty { cookieHeader += "; ds_user_id=\(userId)" }
+        // ส่ง cookie ทั้งชุดเหมือน browser จริง (IG มักเด้งไป login/checkpoint ถ้ามีแค่ sessionid)
+        var cookieHeader: String
+        if !cookies.isEmpty {
+            cookieHeader = cookies.map { "\($0.name)=\($0.value)" }.joined(separator: "; ")
+        } else {
+            cookieHeader = "sessionid=\(sessionId)"
+            if !userId.isEmpty { cookieHeader += "; ds_user_id=\(userId)" }
+            if !csrf.isEmpty { cookieHeader += "; csrftoken=\(csrf)" }
+        }
         req.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
+        if !csrf.isEmpty { req.setValue(csrf, forHTTPHeaderField: "X-CSRFToken") }
+        req.setValue("https://www.instagram.com/direct/inbox/", forHTTPHeaderField: "Referer")
         req.setValue("936619743392459", forHTTPHeaderField: "X-IG-App-ID")
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         req.setValue(safariUA, forHTTPHeaderField: "User-Agent")
-        req.timeoutInterval = 15
+        req.timeoutInterval = 10
 
         URLSession.shared.dataTask(with: req) { data, response, _ in
             guard let httpResponse = response as? HTTPURLResponse else {
@@ -291,28 +320,31 @@ final class BackgroundTaskManager: ObservableObject {
             }
 
             if httpResponse.statusCode == 200, let data = data {
-                var unreadDMs = 0
-                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let inbox = json["inbox"] as? [String: Any],
-                   let unseen = inbox["unseen_count"] as? Int {
-                    unreadDMs = unseen
+                // URLSession ตาม redirect เอง → ถ้าเซสชันหลุดจะได้ 200 เป็นหน้า HTML login แทน 302
+                guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let inbox = json["inbox"] as? [String: Any],
+                      let unreadDMs = inbox["unseen_count"] as? Int else {
+                    let detailMsg = "ได้ 200 แต่ไม่ใช่ข้อมูล inbox (น่าจะโดนเด้งไปหน้า login/checkpoint) กรุณากดปุ่ม 📸 เข้าสู่ระบบใหม่"
+                    print("[IG] ❌ \(detailMsg)")
+                    DispatchQueue.main.async {
+                        self.lastIGStatus = detailMsg
+                        self.lastIGCheck = Date()
+                    }
+                    completion(FetchResult(success: false, httpStatus: 200, likesCount: 0, messagesCount: 0, detail: detailMsg))
+                    return
                 }
 
-                let savedCount = UserDefaults.standard.integer(forKey: "NotificationManager.lastCount")
-
                 DispatchQueue.main.async {
-                    if unreadDMs > savedCount && unreadDMs > 0 {
-                        UserDefaults.standard.set(unreadDMs, forKey: "NotificationManager.lastCount")
-                        NotificationManager.shared.postDisguisedNotification(action: "sent you a direct message.")
-                        NotificationManager.shared.setIconBadge(unreadDMs)
-                    }
+                    NotificationManager.shared.updateCounts(instagram: unreadDMs)
                     let detailMsg = "สำเร็จ (200 OK) - ข้อความ Direct ที่ยังไม่ได้อ่าน: \(unreadDMs) ข้อความ"
+                    print("[IG] ✅ \(detailMsg)")
                     self.lastIGStatus = detailMsg
                     self.lastIGCheck = Date()
                     completion(FetchResult(success: true, httpStatus: 200, likesCount: 0, messagesCount: unreadDMs, detail: detailMsg))
                 }
             } else if httpResponse.statusCode == 401 || httpResponse.statusCode == 302 {
                 let detailMsg = "เซสชันหมดอายุ (\(httpResponse.statusCode)) กรุณากดปุ่ม 📸 เข้าสู่ระบบใหม่อีกครั้ง"
+                print("[IG] ❌ \(detailMsg)")
                 DispatchQueue.main.async {
                     self.lastIGStatus = detailMsg
                     self.lastIGCheck = Date()

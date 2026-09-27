@@ -12,6 +12,8 @@ final class MaskModel: NSObject, ObservableObject {
     @Published var isExplore = false         // โหมดสำรวจเต็มจอ (Seamless Explore)
     @Published var dropletBurst = false      // เอฟเฟกต์หยดน้ำกระจายของ Liquid Glass
     @Published var badgeCount = 0            // เลขแจ้งเตือนจริงจาก Tinder
+    @Published var tinderUnread = 0          // แชท Tinder ยังไม่อ่าน (โชว์บนปุ่มกลับ Tinder)
+    @Published var igUnread = 0              // DM IG ยังไม่อ่าน (โชว์บนปุ่มสลับไป IG)
     @Published var showRealInstagram = false // โหมด decoy: โชว์ instagram.com จริง
 
     let recsURL = URL(string: "https://tinder.com/app/recs")!
@@ -21,8 +23,15 @@ final class MaskModel: NSObject, ObservableObject {
     private var igTitleObservation: NSKeyValueObservation?
 
     // เลขแจ้งเตือนแยกฝั่ง แล้วรวมเป็น badgeCount เดียว
-    private var tinderCount = 0
+    // Tinder มี 2 แหล่งแยกช่องกัน: DOM badge (หลัก) กับ /updates ที่ดักจาก network
+    // /updates บนเว็บเป็น delta มักได้ 0 → ห้ามเขียนทับ DOM ให้ใช้ค่าที่มากกว่าแทน
+    private var tinderDOMCount = 0
+    private var tinderAPICount = 0
+    private var tinderCount: Int { max(tinderDOMCount, tinderAPICount) }
     private var igCount = 0
+
+    @Published var isTinderLoading = false  // สถานะกำลังโหลด Tinder
+    @Published var isIGLoading = false      // สถานะกำลังโหลด Instagram
 
     // webview แยกสำหรับ Instagram จริง (สร้างเมื่อใช้ครั้งแรก, session แยกจำไว้)
     private(set) lazy var igWebView: WKWebView = {
@@ -37,22 +46,23 @@ final class MaskModel: NSObject, ObservableObject {
         config.userContentController.addUserScript(igScript)
         config.userContentController.add(self, name: "maskIG")
 
+        // ฉีดสคริปต์อำพรางหน้าต่างแชทเป็น ChatGPT 4o
+        let chatGPTScript = WKUserScript(source: MaskScripts.chatGPTDirectScript,
+                                         injectionTime: .atDocumentEnd,
+                                         forMainFrameOnly: false)
+        config.userContentController.addUserScript(chatGPTScript)
+
         let wv = WKWebView(frame: .zero, configuration: config)
         wv.customUserAgent = safariUA
         wv.navigationDelegate = self
+        wv.uiDelegate = self
         wv.allowsBackForwardNavigationGestures = true
+        if #available(iOS 16.4, *) {
+            wv.isInspectable = true
+        }
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(handleIGRefresh(_:)), for: .valueChanged)
         wv.scrollView.refreshControl = refreshControl
-        // Instagram web ก็ใส่เลขไว้ใน title เช่น "(3) Instagram" → นับรวมด้วย
-        igTitleObservation = wv.observe(\.title, options: [.new]) { [weak self] w, _ in
-            let c = Self.countInTitle(w.title)
-            DispatchQueue.main.async {
-                guard let self, self.igCount != c else { return }
-                self.igCount = c
-                self.recomputeBadge(source: "Instagram")
-            }
-        }
         return wv
     }()
 
@@ -95,11 +105,23 @@ final class MaskModel: NSObject, ObservableObject {
 
     // รวมเลข 2 ฝั่ง → อัปเดต badge + ยิงแจ้งเตือน
     private func recomputeBadge(source: String? = nil) {
-        let total = tinderCount + igCount
-        guard badgeCount != total else { return }
-        badgeCount = total
         let active = UIApplication.shared.applicationState == .active
-        NotificationManager.shared.handleBadgeChange(to: total, appIsActive: active, source: source)
+        if source == "Tinder" {
+            NotificationManager.shared.updateCounts(tinder: tinderCount, appIsActive: active)
+        } else if source == "Instagram" {
+            NotificationManager.shared.updateCounts(instagram: igCount, appIsActive: active)
+        } else {
+            NotificationManager.shared.updateCounts(tinder: tinderCount, instagram: igCount, appIsActive: active)
+        }
+        syncUnreadCounts()
+    }
+
+    // ดึงยอดล่าสุดจาก NotificationManager (รวมผลจาก background fetch ด้วย)
+    @objc private func syncUnreadCounts() {
+        let mgr = NotificationManager.shared
+        badgeCount = mgr.currentTotalCount
+        tinderUnread = mgr.tinderUnreadCount
+        igUnread = mgr.igUnreadCount
     }
 
     // UA ของ Safari บน iPhone จริง — ให้ Tinder เสิร์ฟเว็บปกติ + login Google ไม่โดนบล็อก
@@ -125,21 +147,19 @@ final class MaskModel: NSObject, ObservableObject {
         config.userContentController.addUserScript(script)
         config.userContentController.add(self, name: "mask")
 
+        syncUnreadCounts()
+        NotificationCenter.default.addObserver(self, selector: #selector(syncUnreadCounts),
+                                               name: .unreadCountsChanged, object: nil)
+
         webView = WKWebView(frame: .zero, configuration: config)
         webView.customUserAgent = safariUA
         webView.uiDelegate = self
+        webView.navigationDelegate = self
         webView.allowsBackForwardNavigationGestures = true
-        webView.load(URLRequest(url: recsURL))
-
-        // Tinder ใส่เลขแจ้งเตือนไว้ใน title เช่น "(4) Tinder" → นับรวมกับ IG
-        titleObservation = webView.observe(\.title, options: [.new]) { [weak self] wv, _ in
-            let c = Self.countInTitle(wv.title)
-            DispatchQueue.main.async {
-                guard let self, self.tinderCount != c else { return }
-                self.tinderCount = c
-                self.recomputeBadge()
-            }
+        if #available(iOS 16.4, *) {
+            webView.isInspectable = true
         }
+        webView.load(URLRequest(url: recsURL))
 
         // ตรวจสอบ URL เพื่อปรับเข้าสู่โหมดแชทเต็มจอ (Seamless Chat) หรือโหมดสำรวจ (Seamless Explore)
         urlObservation = webView.observe(\.url, options: [.new]) { [weak self] wv, _ in
@@ -167,11 +187,30 @@ final class MaskModel: NSObject, ObservableObject {
 
     // ── โหมด decoy: สลับไป Instagram จริง ──
     func toggleRealInstagram() {
-        if !showRealInstagram, igWebView.url == nil {
-            igWebView.load(URLRequest(url: URL(string: "https://www.instagram.com/")!))
+        if !showRealInstagram && igWebView.url == nil {
+            igWebView.load(URLRequest(url: URL(string: "https://www.instagram.com/direct/inbox/")!))
         }
         syncInstagramCookies()
         showRealInstagram.toggle()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.updateIGTheme()
+        }
+    }
+
+    func openInstagramDirect() {
+        let directURL = URL(string: "https://www.instagram.com/direct/inbox/")!
+        if igWebView.url == nil {
+            igWebView.load(URLRequest(url: directURL))
+        } else if let current = igWebView.url?.absoluteString, !current.contains("/direct") && !current.contains("/accounts") {
+            igWebView.load(URLRequest(url: directURL))
+        }
+        updateIGTheme()
+    }
+
+    func updateIGTheme() {
+        let shouldDisguise = (AppSettings.shared.disguiseMode == .chatGPT && !showRealInstagram)
+        let js = "if (window.__mask_toggle_chatgpt) { window.__mask_toggle_chatgpt(\(shouldDisguise ? "true" : "false")); }"
+        igWebView.evaluateJavaScript(js, completionHandler: nil)
     }
 
     // ── รีเฟรชหน้าเว็บ ──
@@ -189,7 +228,7 @@ final class MaskModel: NSObject, ObservableObject {
         if igWebView.url != nil {
             igWebView.reload()
         } else {
-            igWebView.load(URLRequest(url: URL(string: "https://www.instagram.com/")!))
+            igWebView.load(URLRequest(url: URL(string: "https://www.instagram.com/direct/inbox/")!))
         }
     }
 
@@ -233,7 +272,13 @@ final class MaskModel: NSObject, ObservableObject {
     func backToFeed() {
         isInChat = false
         isExplore = false
-        go("recs")
+        if let path = webView.url?.path, !path.contains("/recs") {
+            webView.evaluateJavaScript("window.history.back()") { [weak self] _, error in
+                if error != nil {
+                    self?.go("recs")
+                }
+            }
+        }
     }
 
     func go(_ page: String) {
@@ -289,9 +334,10 @@ extension MaskModel: WKScriptMessageHandler {
             case "dom-badge":
                 if let count = body["payload"] as? Int {
                     DispatchQueue.main.async {
-                        guard self.tinderCount != count else { return }
-                        self.tinderCount = count
-                        self.recomputeBadge(source: "Tinder")
+                        guard self.tinderDOMCount != count else { return }
+                        let before = self.tinderCount
+                        self.tinderDOMCount = count
+                        if self.tinderCount != before { self.recomputeBadge(source: "Tinder") }
                     }
                 }
             case "api-data":
@@ -339,62 +385,108 @@ extension MaskModel: WKScriptMessageHandler {
     }
 
     private func handleTinderAPIData(url: String, data: [String: Any]) {
-        var count = 0
-        if url.contains("/fast-match") {
-            if let dataObj = data["data"] as? [String: Any],
-               let c = dataObj["count"] as? Int {
-                count += c
-            }
-        } else if url.contains("/updates") {
+        var unreadChats = 0
+        if url.contains("/updates") || url.contains("/matches") {
             if let matches = data["matches"] as? [[String: Any]] {
-                count += matches.count
+                for m in matches {
+                    let hasUnseen = (m["has_unseen_message"] as? Bool) ?? false
+                    let isNew = (m["is_new_message"] as? Bool) ?? false
+                    if hasUnseen || isNew {
+                        unreadChats += 1
+                    } else if let messages = m["messages"] as? [[String: Any]], !messages.isEmpty {
+                        if let lastMsg = messages.last {
+                            let lastMsgId = lastMsg["_id"] as? String
+                            if let seen = m["seen"] as? [String: Any] {
+                                let lastSeenId = seen["last_seen_msg_id"] as? String
+                                if lastMsgId != nil && lastMsgId != lastSeenId {
+                                    unreadChats += 1
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        } else if url.contains("/meta") {
-            if let dataObj = data["data"] as? [String: Any] {
-                if let c = dataObj["unread_count"] as? Int { count += c }
-            }
-        }
-
-        if count > 0 {
             DispatchQueue.main.async {
-                guard self.tinderCount != count else { return }
-                self.tinderCount = count
-                self.recomputeBadge(source: "Tinder")
+                guard self.tinderAPICount != unreadChats else { return }
+                let before = self.tinderCount
+                self.tinderAPICount = unreadChats
+                if self.tinderCount != before { self.recomputeBadge(source: "Tinder") }
             }
         }
     }
 
     private func handleInstagramAPIData(url: String, data: [String: Any]) {
-        var unseen = 0
+        // นับเฉพาะข้อความ Direct ที่ยังไม่ได้อ่าน (ไม่นับ Activity / ไลค์รูป / การแจ้งเตือนทั่วไป)
         if url.contains("/direct_v2/inbox/") {
+            var unseen = 0
             if let inbox = data["inbox"] as? [String: Any],
                let u = inbox["unseen_count"] as? Int {
                 unseen = u
             }
-        } else if url.contains("/notifications/badge/") {
-            if let b = data["badge_count"] as? Int {
-                unseen = b
+
+            DispatchQueue.main.async {
+                guard self.igCount != unseen else { return }
+                self.igCount = unseen
+                self.recomputeBadge(source: "Instagram")
             }
         }
-
-        DispatchQueue.main.async {
-            guard self.igCount != unseen else { return }
-            self.igCount = unseen
-            self.recomputeBadge(source: "Instagram")
-        }
     }
 }
 
-// ── ติดตามการโหลดหน้าเว็บของ Instagram เพื่อดึง Session Cookies ทันทีที่โหลดเสร็จ ──
+// ── ติดตามการโหลดหน้าเว็บของ Tinder และ Instagram เพื่ออัปเดตสถานะและดึงคุกกี้ ──
 extension MaskModel: WKNavigationDelegate {
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        if webView === igWebView {
-            syncInstagramCookies()
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        DispatchQueue.main.async {
+            if webView === self.igWebView {
+                self.isIGLoading = true
+            } else {
+                self.isTinderLoading = true
+            }
         }
+    }
+
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        if webView === self.igWebView {
+            self.updateIGTheme()
+        }
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        DispatchQueue.main.async {
+            if webView === self.igWebView {
+                self.isIGLoading = false
+                self.syncInstagramCookies()
+                self.updateIGTheme()
+            } else {
+                self.isTinderLoading = false
+            }
+        }
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        DispatchQueue.main.async {
+            if webView === self.igWebView {
+                self.isIGLoading = false
+            } else {
+                self.isTinderLoading = false
+            }
+        }
+        print("[WebView Error] didFail: \(error.localizedDescription)")
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        DispatchQueue.main.async {
+            if webView === self.igWebView {
+                self.isIGLoading = false
+            } else {
+                self.isTinderLoading = false
+            }
+        }
+        print("[WebView Error] didFailProvisional: \(error.localizedDescription)")
     }
 }
 
-// ── popup (login Google/Facebook เปิดหน้าต่างใหม่) → โชว์เป็น sheet ──
+// ── popup (login Google/Facebook เปิดหน้าต่างใหม่) + จัดการสิทธิ์ Geolocation ──
 extension MaskModel: WKUIDelegate {
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                  for navigationAction: WKNavigationAction,
@@ -409,11 +501,42 @@ extension MaskModel: WKUIDelegate {
     func webViewDidClose(_ webView: WKWebView) {
         if webView === popupWebView { popupWebView = nil }
     }
+
+    @available(iOS 15.0, *)
+    func webView(_ webView: WKWebView, requestGeolocationPermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+        // อนุญาตสิทธิ์ตำแหน่งสำหรับ Tinder เพื่อให้โหลดการ์ดโปรไฟล์รอบตัวได้ทันที
+        decisionHandler(.grant)
+    }
 }
 
-// ── ห่อ WKWebView ให้ SwiftUI ใช้ ──
+// ── ห่อ WKWebView ให้ SwiftUI ใช้ พร้อม AutoLayout Container ป้องกันจอดำระหว่างสลับหน้า (Reparenting fix) ──
 struct WebViewRepresentable: UIViewRepresentable {
     let webView: WKWebView
-    func makeUIView(context: Context) -> WKWebView { webView }
-    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    func makeUIView(context: Context) -> UIView {
+        let container = UIView()
+        container.backgroundColor = .clear
+        attach(webView: webView, to: container)
+        return container
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        attach(webView: webView, to: uiView)
+    }
+
+    private func attach(webView: WKWebView, to container: UIView) {
+        if webView.superview !== container {
+            webView.removeFromSuperview()
+            webView.translatesAutoresizingMaskIntoConstraints = false
+            container.addSubview(webView)
+            NSLayoutConstraint.activate([
+                webView.topAnchor.constraint(equalTo: container.topAnchor),
+                webView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+                webView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                webView.trailingAnchor.constraint(equalTo: container.trailingAnchor)
+            ])
+            container.setNeedsLayout()
+            container.layoutIfNeeded()
+        }
+    }
 }

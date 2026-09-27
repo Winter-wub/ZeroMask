@@ -24,6 +24,7 @@ enum ThemeMode: String, CaseIterable, Identifiable {
 enum DisguiseMode: String, CaseIterable, Identifiable {
     case liquidGlass = "liquid"
     case rawTinder = "tinder"
+    case chatGPT = "chatgpt"
 
     var id: String { rawValue }
 
@@ -31,6 +32,21 @@ enum DisguiseMode: String, CaseIterable, Identifiable {
         switch self {
         case .liquidGlass: return "💎 Liquid Glass"
         case .rawTinder:   return "🔥 Tinder"
+        case .chatGPT:     return "🤖 ChatGPT 4o"
+        }
+    }
+}
+
+enum NotificationDisguiseStyle: String, CaseIterable, Identifiable {
+    case aiAgent = "ai_agent"
+    case instagram = "instagram"
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .aiAgent:   return "🤖 AI Agent (Dev / Work)"
+        case .instagram: return "📸 Instagram"
         }
     }
 }
@@ -60,7 +76,10 @@ final class AppSettings: ObservableObject {
     }
 
     // ── การแจ้งเตือน ──
-    @AppStorage("notificationsEnabled") var notificationsEnabled = false {
+    @AppStorage("notificationsEnabled") var notificationsEnabled = true {
+        willSet { objectWillChange.send() }
+    }
+    @AppStorage("notificationDisguiseStyle") var notificationDisguiseStyle: NotificationDisguiseStyle = .aiAgent {
         willSet { objectWillChange.send() }
     }
     @AppStorage("notificationSound") var notificationSound = true {

@@ -8,6 +8,7 @@ enum MaskScripts {
     static let userScript = #"""
     (function () {
       if (!location.hostname.endsWith('tinder.com')) return;
+      if (location.pathname === '/' || location.pathname.indexOf('/login') !== -1) return;
 
       // ── CSS ลอก UI ของ Tinder ออก ──
       var css = [
@@ -105,16 +106,7 @@ enum MaskScripts {
               } catch (e) {}
             }
           }
-          if (!token) {
-            for (var i = 0; i < localStorage.length; i++) {
-              var k = localStorage.key(i);
-              var val = localStorage.getItem(k);
-              if (val && val.length > 20) {
-                var m = val.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-                if (m) { token = m[0]; break; }
-              }
-            }
-          }
+          // ไม่เดา UUID จาก key อื่น — อาจได้ device id มาทับ token จริงที่ดักจาก network
           if (token && token !== lastExtractedToken) {
             lastExtractedToken = token;
             send('auth-token', token);
@@ -124,17 +116,43 @@ enum MaskScripts {
       checkToken();
       setInterval(checkToken, 3000);
 
-      // ── ตรวจสอบ DOM สำหรับ Badge ตัวเลขแจ้งเตือนใน Tinder ──
-      var lastDOMBadgeCount = 0;
+      // ── ตรวจสอบ DOM สำหรับตัวเลขแชทที่ยังไม่ได้อ่านใน Tinder (ไม่นับ Likes / Matches) ──
+      var lastDOMBadgeCount = -1;
       var checkTinderDOMBadges = function () {
         try {
-          var badges = document.querySelectorAll('nav [aria-label*="unread"], nav [aria-label*="Unread"], nav [class*="badge"], [data-testid*="badge"]');
           var count = 0;
-          for (var i = 0; i < badges.length; i++) {
-            var txt = (badges[i].textContent || '').trim();
-            var n = parseInt(txt, 10);
-            if (!isNaN(n) && n > 0) count += n;
-            else count += 1;
+          // 1. ตรวจ badge ตัวเลขบนแท็บข้อความ (Messages tab เท่านั้น ไม่ตรวจ Matches/Likes)
+          var tabButtons = document.querySelectorAll('button[role="tab"], a[href*="/app/messages"]');
+          for (var i = 0; i < tabButtons.length; i++) {
+            var btn = tabButtons[i];
+            var txt = (btn.getAttribute('aria-label') || btn.textContent || '').toLowerCase();
+            if ((txt.indexOf('message') !== -1 || txt.indexOf('ข้อความ') !== -1) &&
+                txt.indexOf('match') === -1 && txt.indexOf('like') === -1) {
+              var badgeEl = btn.querySelector('[class*="badge"], span[aria-label*="unread"], div[aria-label*="unread"]');
+              if (badgeEl) {
+                var bTxt = (badgeEl.textContent || '').trim();
+                var n = parseInt(bTxt, 10);
+                if (!isNaN(n) && n > 0) count = Math.max(count, n);
+              }
+            }
+          }
+          // 2. ตรวจนับจำนวนห้องแชทที่มี unread dot หรือเครื่องหมายข้อความใหม่
+          var unreadChatRows = document.querySelectorAll(
+            'a[href*="/app/messages/"] [class*="unread"], ' +
+            'a[href*="/app/messages/"] [aria-label*="unread"], ' +
+            'a[href*="/app/messages/"] [aria-label*="Unread"]'
+          );
+          if (unreadChatRows.length > 0) {
+            count = Math.max(count, unreadChatRows.length);
+          }
+          // 3. ตรวจอีกวิธี: badge ตัวเลขบน icon ภายในแท็บ messages
+          var allSpans = document.querySelectorAll('a[href*="/app/messages"] span');
+          for (var s = 0; s < allSpans.length; s++) {
+            var sTxt = (allSpans[s].textContent || '').trim();
+            if (/^\d+$/.test(sTxt)) {
+              var sNum = parseInt(sTxt, 10);
+              if (sNum > 0) count = Math.max(count, sNum);
+            }
           }
           if (count !== lastDOMBadgeCount) {
             lastDOMBadgeCount = count;
@@ -142,7 +160,7 @@ enum MaskScripts {
           }
         } catch (e) {}
       };
-      setInterval(checkTinderDOMBadges, 3000);
+      setInterval(checkTinderDOMBadges, 2000);
     })();
     """#
 
@@ -300,33 +318,41 @@ enum MaskScripts {
       checkCookies();
       setInterval(checkCookies, 5000);
 
-      // 2. ดัก DOM Badge ของ Instagram (Direct inbox, Notifications)
+      // 2. ดัก DOM Badge ของ Instagram Direct Inbox เท่านั้น (ไม่ดัก Notifications/Heart หรือ Title)
       var lastIGCount = -1;
       var checkIGDOM = function () {
         try {
           var count = 0;
 
-          // a. ดักตัวเลขใน Title เช่น "(3) Instagram"
-          var tm = document.title ? document.title.match(/^\((\d+)\)/) : null;
-          if (tm && tm[1]) {
-            var tc = parseInt(tm[1], 10);
-            if (!isNaN(tc)) count = Math.max(count, tc);
+          // วิธีที่ 1: ตรวจ badge ตัวเลขบนลิงก์ /direct/
+          var allLinks = document.querySelectorAll('a[href*="/direct/"]');
+          for (var i = 0; i < allLinks.length; i++) {
+            var link = allLinks[i];
+            // หา span หรือ div ที่มีตัวเลข (badge) ภายในลิงก์
+            var spans = link.querySelectorAll('span, div[role="button"]');
+            for (var j = 0; j < spans.length; j++) {
+              var txt = (spans[j].textContent || '').trim();
+              if (/^\d+$/.test(txt)) {
+                var n = parseInt(txt, 10);
+                if (n > 0) count = Math.max(count, n);
+              }
+            }
           }
 
-          // b. ดัก Badge ใน DOM ของ Inbox/Direct icon
-          var directBadges = document.querySelectorAll(
-            'a[href*="/direct/"] span, a[href*="/direct/"] div[class*="badge"], ' +
-            'svg[aria-label*="Direct"] ~ div, svg[aria-label*="Messages"] ~ div, ' +
-            '[aria-label*="unread"], [aria-label*="Unread"]'
-          );
-          for (var i = 0; i < directBadges.length; i++) {
-            var txt = (directBadges[i].textContent || '').trim();
-            var n = parseInt(txt, 10);
-            if (!isNaN(n) && n > 0) {
-              count = Math.max(count, n);
-            } else if (directBadges[i].getAttribute && directBadges[i].getAttribute('aria-label')) {
-              var am = directBadges[i].getAttribute('aria-label').match(/\d+/);
-              if (am) count = Math.max(count, parseInt(am[0], 10));
+          // วิธีที่ 2: ตรวจ aria-label ที่มี "Direct" หรือ "Messenger"
+          var ariaEls = document.querySelectorAll('[aria-label*="Direct"], [aria-label*="direct"], [aria-label*="Messenger"], [aria-label*="message"]');
+          for (var k = 0; k < ariaEls.length; k++) {
+            var el = ariaEls[k];
+            var parentLink = el.closest('a');
+            if (parentLink && parentLink.getAttribute('href') && parentLink.getAttribute('href').indexOf('/direct') !== -1) {
+              var badgeSpans = el.querySelectorAll('span');
+              for (var m = 0; m < badgeSpans.length; m++) {
+                var bTxt = (badgeSpans[m].textContent || '').trim();
+                if (/^\d+$/.test(bTxt)) {
+                  var bNum = parseInt(bTxt, 10);
+                  if (bNum > 0) count = Math.max(count, bNum);
+                }
+              }
             }
           }
 
@@ -336,16 +362,16 @@ enum MaskScripts {
           }
         } catch (e) {}
       };
-      setInterval(checkIGDOM, 3000);
+      setInterval(checkIGDOM, 2000);
 
-      // 3. ดัก Network (fetch) ของ Instagram
+      // 3. ดัก Network (fetch) ของ Instagram เฉพาะ Direct Messages
       if (window.fetch) {
         var origFetch = window.fetch;
         window.fetch = function (input, init) {
           return origFetch.apply(this, arguments).then(function (response) {
             try {
               var u = (typeof input === 'string') ? input : (input && input.url) ? input.url : '';
-              if (u && (u.indexOf('/direct_v2/inbox/') !== -1 || u.indexOf('/notifications/badge/') !== -1 || u.indexOf('/news/inbox/') !== -1)) {
+              if (u && u.indexOf('/direct_v2/inbox/') !== -1) {
                 var clone = response.clone();
                 clone.json().then(function (data) {
                   send('ig-api-data', { url: u, data: data });
@@ -356,6 +382,145 @@ enum MaskScripts {
           });
         };
       }
+    })();
+    """#
+
+    /// CSS/JS ที่ฉีดเข้า Instagram Direct เพื่ออำพรางหน้าตาเป็น ChatGPT 4o Dark Mode อย่างสมบูรณ์
+    static let chatGPTDirectScript = #"""
+    (function () {
+      var STYLE_ID = 'mask-chatgpt-override';
+
+      var css = [
+        /* 1. บังคับพื้นหลังดำเทา #212121 สไตล์ ChatGPT 4o */
+        'html, body, #mount_0_0, div[role="main"], section, main {',
+        '  background-color: #212121 !important;',
+        '  color: #ececec !important;',
+        '  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;',
+        '}',
+
+        /* 2. บังคับข้อความทั้งหมดในหน้ารวมแชทและห้องแชทให้อ่านได้ชัดเจน ไม่มืดดำ */
+        'div[role="main"] span, div[role="main"] p, div[role="main"] div, div[role="main"] h1, div[role="main"] h2, div[role="main"] h3 {',
+        '  color: #ececec !important;',
+        '}',
+
+        /* 3. รายการแชทใน Inbox -> สีเทาเข้ม มีเส้นคั่นบางๆ */
+        'a[href^="/direct/t/"] {',
+        '  background-color: #212121 !important;',
+        '  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;',
+        '}',
+        'a[href^="/direct/t/"]:active {',
+        '  background-color: #2f2f2f !important;',
+        '}',
+
+        /* 4. ซ่อนแบนเนอร์ชวนเปิดแอพ และโลโก้คำว่า Instagram (เฉพาะใน /direct/) */
+        'svg[aria-label="Instagram"],',
+        'div:has(> a[href*="app-store"]), div:has(> a[href*="play.google"]),',
+        'a[href*="app-store"], a[href*="play.google"] {',
+        '  display: none !important;',
+        '}',
+
+        /* 5. ซ่อนแท็บล่างทั่วไปของ Instagram (Home, Reels, Explore) เพื่อให้ดูเหมือนหน้าต่างแชทเดี่ยว */
+        'nav:has(a[href^="/explore"]) {',
+        '  display: none !important;',
+        '}',
+
+        /* 6. แถบหัวด้านบนของ Direct -> แต่งเป็นสีเทาดำ #171717 */
+        'header, div[role="navigation"] {',
+        '  background-color: #171717 !important;',
+        '  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;',
+        '}',
+        'header *, div[role="navigation"] * {',
+        '  color: #ececec !important;',
+        '}',
+
+        /* 7. กล่องข้อความที่เราส่ง (Sent) -> แคปซูล Prompt สีเทาเข้ม #2f2f2f */
+        'div[style*="border-top-right-radius"],',
+        'div[style*="background: rgb(55, 151, 240)"],',
+        'div[style*="linear-gradient"] {',
+        '  background: #2f2f2f !important;',
+        '  color: #ffffff !important;',
+        '  border-radius: 18px !important;',
+        '  box-shadow: none !important;',
+        '}',
+        'div[style*="border-top-right-radius"] *,',
+        'div[style*="background: rgb(55, 151, 240)"] *,',
+        'div[style*="linear-gradient"] * {',
+        '  color: #ffffff !important;',
+        '}',
+
+        /* 8. กล่องข้อความที่คู่สนทนาตอบ (Received) -> ไร้กรอบ แบบ Plain Text ของ ChatGPT */
+        'div[style*="background-color: rgb(38, 38, 38)"],',
+        'div[style*="background-color: rgb(240, 240, 240)"] {',
+        '  background: transparent !important;',
+        '  color: #d1d5db !important;',
+        '  border: none !important;',
+        '  box-shadow: none !important;',
+        '}',
+
+        /* 9. ช่องพิมพ์ข้อความด้านล่าง -> แคปซูล ChatGPT มนๆ */
+        'div:has(> textarea[placeholder*="Message"]),',
+        'div:has(> textarea),',
+        'div[contenteditable="true"] {',
+        '  background-color: #2f2f2f !important;',
+        '  border: 1px solid rgba(255, 255, 255, 0.18) !important;',
+        '  border-radius: 24px !important;',
+        '  color: #ffffff !important;',
+        '}',
+        'textarea, input, [contenteditable="true"] {',
+        '  background: transparent !important;',
+        '  color: #ffffff !important;',
+        '}',
+        'textarea::placeholder, input::placeholder {',
+        '  color: rgba(255, 255, 255, 0.45) !important;',
+        '}',
+
+        /* 10. ปรับไอคอนต่างๆ ให้เป็นสีขาวนวล */
+        'svg {',
+        '  fill: #ececec !important;',
+        '}'
+      ].join('\n');
+
+      var removeStyle = function () {
+        var existing = document.getElementById(STYLE_ID);
+        if (existing && existing.parentNode) {
+          existing.parentNode.removeChild(existing);
+        }
+      };
+
+      var applyStyle = function () {
+        if (!document.getElementById(STYLE_ID)) {
+          var tag = document.createElement('style');
+          tag.id = STYLE_ID;
+          tag.textContent = css;
+          (document.head || document.documentElement).appendChild(tag);
+        }
+      };
+
+      // ฟังก์ชันสำหรับเปิด/ปิดโหมด ChatGPT จาก Native หรือตาม URL
+      window.__mask_chatgpt_enabled = true;
+      window.__mask_toggle_chatgpt = function (enabled) {
+        window.__mask_chatgpt_enabled = (enabled !== false);
+        window.__mask_check_route();
+      };
+
+      window.__mask_check_route = function () {
+        // ห้ามฉีดสไตล์ในหน้า Login / Accounts เด็ดขาด เพื่อให้ล็อกอินได้ปกติ
+        if (location.pathname.indexOf('/accounts') !== -1) {
+          removeStyle();
+          return;
+        }
+
+        // ฉีดเฉพาะเมื่อเปิดโหมด ChatGPT และอยู่ใน /direct/ เท่านั้น
+        if (window.__mask_chatgpt_enabled && location.pathname.indexOf('/direct') !== -1) {
+          applyStyle();
+        } else {
+          removeStyle();
+        }
+      };
+
+      // รันการตรวจสอบทันทีและตามระยะเมื่อ URL มีการเปลี่ยนแปลง (SPA Routing)
+      window.__mask_check_route();
+      setInterval(window.__mask_check_route, 1000);
     })();
     """#
 }

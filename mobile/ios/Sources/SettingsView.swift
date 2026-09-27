@@ -148,6 +148,12 @@ struct SettingsView: View {
                         }
                     ))
                     if settings.notificationsEnabled {
+                        Picker("รูปแบบการพรางตัว", selection: $settings.notificationDisguiseStyle) {
+                            ForEach(NotificationDisguiseStyle.allCases) { style in
+                                Text(style.label).tag(style)
+                            }
+                        }
+
                         Toggle("เสียงแจ้งเตือน", isOn: $settings.notificationSound)
                         Toggle("แสดงเลขบนไอคอนแอป", isOn: $settings.showIconBadge)
                         Toggle("แจ้งเตือนขณะใช้แอปอยู่", isOn: $settings.notifyWhileUsing)
@@ -156,7 +162,9 @@ struct SettingsView: View {
                 } header: {
                     Text("การแจ้งเตือน")
                 } footer: {
-                    Text("ระบบจะสุ่มแจ้งเตือนเป็นข้อความ Instagram เมื่อมีแมตช์หรือข้อความใหม่ โดยจะแอบดึงข้อมูลเป็นระยะเบื้องหลัง (Background App Refresh)")
+                    Text(settings.notificationDisguiseStyle == .aiAgent
+                        ? "ระบบจะสุ่มแจ้งเตือนเป็นข้อความ AI Agent (สถานะงาน / task สำเร็จ / โค้ด) เมื่อมีแมตช์หรือข้อความใหม่ โดยจะแอบดึงข้อมูลเป็นระยะเบื้องหลัง (Background App Refresh)"
+                        : "ระบบจะสุ่มแจ้งเตือนเป็นข้อความ Instagram เมื่อมีแมตช์หรือข้อความใหม่ โดยจะแอบดึงข้อมูลเป็นระยะเบื้องหลัง (Background App Refresh)")
                 }
 
                 // ── ความปลอดภัย ──
@@ -260,7 +268,7 @@ struct SettingsView: View {
                 }
                 Button("ตกลง", role: .cancel) {}
             } message: {
-                Text("คุณปิดสิทธิ์แจ้งเตือนไว้ ไปเปิดที่ Settings → Instagram → Notifications")
+                Text("คุณปิดสิทธิ์แจ้งเตือนไว้ ไปเปิดที่การตั้งค่าเครื่อง (Settings → Notifications)")
             }
             .alert("ทดสอบการแจ้งเตือน", isPresented: Binding(
                 get: { testAlertMessage != nil },
@@ -445,7 +453,7 @@ struct SettingsView: View {
                         UINotificationFeedbackGenerator().notificationOccurred(.success)
                         notifMgr.postDisguisedNotification(force: true) { success, msg in
                             if success {
-                                testAlertMessage = "ส่งการแจ้งเตือนสำเร็จ!\n\nเนื้อหา: \"\(msg)\"\n\n🔔 หากแถบ Banner ไม่เด้งลงมา โปรดเลื่อน Notification Center (ปัดขอบจอด้านบนลงมา) หรือตรวจเช็คว่าเปิดโหมด Focus/ห้ามรบกวน ไว้หรือไม่"
+                                testAlertMessage = "ส่งการแจ้งเตือนพรางตัวสำเร็จ!\n\n\(msg)\n\n🔔 หากแถบ Banner ไม่เด้งลงมา โปรดเลื่อน Notification Center (ปัดขอบจอด้านบนลงมา) หรือตรวจเช็คว่าเปิดโหมด Focus/ห้ามรบกวน ไว้หรือไม่"
                             } else {
                                 testAlertMessage = msg
                             }
@@ -456,8 +464,9 @@ struct SettingsView: View {
                 }
             } label: {
                 HStack {
-                    Image(systemName: "bell.badge.fill").foregroundColor(.blue)
-                    Text("ทดสอบส่งการแจ้งเตือนพรางตัว")
+                    Image(systemName: settings.notificationDisguiseStyle == .aiAgent ? "cpu.fill" : "bell.badge.fill")
+                        .foregroundColor(.blue)
+                    Text(settings.notificationDisguiseStyle == .aiAgent ? "🤖 ทดสอบส่งแจ้งเตือน AI Agent" : "📸 ทดสอบส่งแจ้งเตือน Instagram")
                 }
                 .font(.footnote.weight(.medium))
                 .frame(maxWidth: .infinity)
